@@ -6,9 +6,9 @@ encoding utf-8
 Sheet 1 1
 Title "STM32 Dev Board"
 Date ""
-Rev "1"
-Comp ""
-Comment1 ""
+Rev "a"
+Comp "Lars Boegild Thomsen"
+Comment1 "lbthomsen@gmail.com"
 Comment2 ""
 Comment3 ""
 Comment4 ""
