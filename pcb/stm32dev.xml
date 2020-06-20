@@ -2,7 +2,7 @@
 <export version="D">
   <design>
     <source>/home/lth/src/stm32dev/pcb/stm32dev.sch</source>
-    <date>Sat 20 Jun 2020 08:37:40 +08</date>
+    <date>Sat 20 Jun 2020 13:39:41 +08</date>
     <tool>Eeschema 5.1.6+dfsg1-1</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
