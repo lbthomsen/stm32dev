@@ -2,16 +2,16 @@
 <export version="D">
   <design>
     <source>/home/lth/src/stm32dev/pcb/stm32dev.sch</source>
-    <date>Sat 20 Jun 2020 13:39:41 +08</date>
+    <date>Sat 20 Jun 2020 17:39:26 +08</date>
     <tool>Eeschema 5.1.6+dfsg1-1</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
         <title>STM32 Dev Board</title>
-        <company/>
-        <rev>1</rev>
+        <company>Lars Boegild Thomsen</company>
+        <rev>a</rev>
         <date/>
         <source>stm32dev.sch</source>
-        <comment number="1" value=""/>
+        <comment number="1" value="lbthomsen@gmail.com"/>
         <comment number="2" value=""/>
         <comment number="3" value=""/>
         <comment number="4" value=""/>
