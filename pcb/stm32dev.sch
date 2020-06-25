@@ -413,12 +413,12 @@ Wire Wire Line
 $Comp
 L Connector:Micro_SD_Card_Det J2
 U 1 1 62026105
-P 3450 6650
-F 0 "J2" H 3400 7467 50  0000 C CNN
-F 1 "Micro_SD_Card_Det" H 3400 7376 50  0000 C CNN
-F 2 "Connector_Card:microSD_HC_Hirose_DM3D-SF" H 5500 7350 50  0001 C CNN
-F 3 "https://www.hirose.com/product/en/download_file/key_name/DM3/category/Catalog/doc_file_id/49662/?file_category_id=4&item_id=195&is_series=1" H 3450 6750 50  0001 C CNN
-	1    3450 6650
+P 3950 6700
+F 0 "J2" H 3900 7517 50  0000 C CNN
+F 1 "Micro_SD_Card_Det" H 3900 7426 50  0000 C CNN
+F 2 "Connector_Card:microSD_HC_Hirose_DM3D-SF" H 6000 7400 50  0001 C CNN
+F 3 "https://www.hirose.com/product/en/download_file/key_name/DM3/category/Catalog/doc_file_id/49662/?file_category_id=4&item_id=195&is_series=1" H 3950 6800 50  0001 C CNN
+	1    3950 6700
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -466,38 +466,38 @@ Wire Wire Line
 $Comp
 L LED:WS2812B D2
 U 1 1 620C7EB0
-P 5650 6650
-F 0 "D2" H 5994 6696 50  0000 L CNN
-F 1 "WS2812B" H 5994 6605 50  0000 L CNN
-F 2 "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm" H 5700 6350 50  0001 L TNN
-F 3 "https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf" H 5750 6275 50  0001 L TNN
-F 4 "C114586" H 5650 6650 50  0001 C CNN "LCSC"
-	1    5650 6650
+P 6150 6700
+F 0 "D2" H 6494 6746 50  0000 L CNN
+F 1 "WS2812B" H 6494 6655 50  0000 L CNN
+F 2 "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm" H 6200 6400 50  0001 L TNN
+F 3 "https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf" H 6250 6325 50  0001 L TNN
+F 4 "C114586" H 6150 6700 50  0001 C CNN "LCSC"
+	1    6150 6700
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR018
 U 1 1 620C7EBC
-P 5650 7050
+P 6150 7100
 AR Path="/620C7EBC" Ref="#PWR018"  Part="1" 
 AR Path="/5DBB3EFB/620C7EBC" Ref="#PWR?"  Part="1" 
 AR Path="/5DBC2A2A/5DBB3EFB/620C7EBC" Ref="#PWR?"  Part="1" 
-F 0 "#PWR018" H 5650 6800 50  0001 C CNN
-F 1 "GND" H 5655 6877 50  0000 C CNN
-F 2 "" H 5650 7050 50  0001 C CNN
-F 3 "" H 5650 7050 50  0001 C CNN
-	1    5650 7050
+F 0 "#PWR018" H 6150 6850 50  0001 C CNN
+F 1 "GND" H 6155 6927 50  0000 C CNN
+F 2 "" H 6150 7100 50  0001 C CNN
+F 3 "" H 6150 7100 50  0001 C CNN
+	1    6150 7100
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	5650 6250 5650 6350
+	6150 6300 6150 6400
 Wire Wire Line
-	5650 6950 5650 7050
-Text GLabel 5250 6650 0    50   Input ~ 0
+	6150 7000 6150 7100
+Text GLabel 5750 6700 0    50   Input ~ 0
 RGB
 Wire Wire Line
-	5250 6650 5350 6650
-NoConn ~ 5950 6650
+	5750 6700 5850 6700
+NoConn ~ 6450 6700
 $Comp
 L Device:C C?
 U 1 1 620E7342
@@ -725,69 +725,69 @@ Wire Wire Line
 	10300 2300 10100 2300
 Wire Wire Line
 	10100 2300 10100 1000
-Text GLabel 2350 6250 0    50   Input ~ 0
+Text GLabel 2850 6300 0    50   Input ~ 0
 SD_D2
-Text GLabel 2350 6350 0    50   Input ~ 0
+Text GLabel 2850 6400 0    50   Input ~ 0
 SD_D3
-Text GLabel 2350 6450 0    50   Input ~ 0
+Text GLabel 2850 6500 0    50   Input ~ 0
 SD_CMD
-Text GLabel 2350 6650 0    50   Input ~ 0
+Text GLabel 2850 6700 0    50   Input ~ 0
 SD_CLK
-Text GLabel 2350 6850 0    50   Input ~ 0
+Text GLabel 2850 6900 0    50   Input ~ 0
 SD_D0
-Text GLabel 2350 6950 0    50   Input ~ 0
+Text GLabel 2850 7000 0    50   Input ~ 0
 SD_D1
-Text GLabel 2350 7050 0    50   Input ~ 0
+Text GLabel 2850 7100 0    50   Input ~ 0
 SD_DET
 Wire Wire Line
-	2350 6250 2550 6250
+	2850 6300 3050 6300
 Wire Wire Line
-	2550 6350 2350 6350
+	3050 6400 2850 6400
 Wire Wire Line
-	2350 6450 2550 6450
+	2850 6500 3050 6500
 Wire Wire Line
-	2550 6650 2350 6650
+	3050 6700 2850 6700
 Wire Wire Line
-	2350 6850 2550 6850
+	2850 6900 3050 6900
 Wire Wire Line
-	2350 6950 2550 6950
+	2850 7000 3050 7000
 Wire Wire Line
-	2550 7050 2350 7050
+	3050 7100 2850 7100
 $Comp
 L power:GND #PWR08
 U 1 1 62151480
-P 2450 7250
-F 0 "#PWR08" H 2450 7000 50  0001 C CNN
-F 1 "GND" H 2455 7077 50  0000 C CNN
-F 2 "" H 2450 7250 50  0001 C CNN
-F 3 "" H 2450 7250 50  0001 C CNN
-	1    2450 7250
+P 2950 7300
+F 0 "#PWR08" H 2950 7050 50  0001 C CNN
+F 1 "GND" H 2955 7127 50  0000 C CNN
+F 2 "" H 2950 7300 50  0001 C CNN
+F 3 "" H 2950 7300 50  0001 C CNN
+	1    2950 7300
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:VCC #PWR07
 U 1 1 621536F0
-P 2450 6100
-F 0 "#PWR07" H 2450 5950 50  0001 C CNN
-F 1 "VCC" H 2465 6273 50  0000 C CNN
-F 2 "" H 2450 6100 50  0001 C CNN
-F 3 "" H 2450 6100 50  0001 C CNN
-	1    2450 6100
+P 2950 6150
+F 0 "#PWR07" H 2950 6000 50  0001 C CNN
+F 1 "VCC" H 2965 6323 50  0000 C CNN
+F 2 "" H 2950 6150 50  0001 C CNN
+F 3 "" H 2950 6150 50  0001 C CNN
+	1    2950 6150
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	2450 6100 2450 6550
+	2950 6150 2950 6600
 Wire Wire Line
-	2450 6550 2550 6550
+	2950 6600 3050 6600
 Wire Wire Line
-	2550 6750 2450 6750
+	3050 6800 2950 6800
 Wire Wire Line
-	2450 6750 2450 7150
+	2950 6800 2950 7200
 Wire Wire Line
-	2550 7150 2450 7150
-Connection ~ 2450 7150
+	3050 7200 2950 7200
+Connection ~ 2950 7200
 Wire Wire Line
-	2450 7150 2450 7250
+	2950 7200 2950 7300
 Text GLabel 4750 4150 0    50   Input ~ 0
 SD_D2
 Text GLabel 4750 4250 0    50   Input ~ 0
@@ -831,12 +831,12 @@ Wire Wire Line
 $Comp
 L power:VCC #PWR017
 U 1 1 6219D757
-P 5650 6250
-F 0 "#PWR017" H 5650 6100 50  0001 C CNN
-F 1 "VCC" H 5665 6423 50  0000 C CNN
-F 2 "" H 5650 6250 50  0001 C CNN
-F 3 "" H 5650 6250 50  0001 C CNN
-	1    5650 6250
+P 6150 6300
+F 0 "#PWR017" H 6150 6150 50  0001 C CNN
+F 1 "VCC" H 6165 6473 50  0000 C CNN
+F 2 "" H 6150 6300 50  0001 C CNN
+F 3 "" H 6150 6300 50  0001 C CNN
+	1    6150 6300
 	1    0    0    -1  
 $EndComp
 Text GLabel 6350 3850 2    50   Input ~ 0
@@ -1025,18 +1025,18 @@ Connection ~ 10200 2500
 $Comp
 L power:GND #PWR013
 U 1 1 623690A3
-P 4350 7250
-F 0 "#PWR013" H 4350 7000 50  0001 C CNN
-F 1 "GND" H 4355 7077 50  0000 C CNN
-F 2 "" H 4350 7250 50  0001 C CNN
-F 3 "" H 4350 7250 50  0001 C CNN
-	1    4350 7250
+P 4850 7300
+F 0 "#PWR013" H 4850 7050 50  0001 C CNN
+F 1 "GND" H 4855 7127 50  0000 C CNN
+F 2 "" H 4850 7300 50  0001 C CNN
+F 3 "" H 4850 7300 50  0001 C CNN
+	1    4850 7300
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4250 7150 4350 7150
+	4750 7200 4850 7200
 Wire Wire Line
-	4350 7150 4350 7250
+	4850 7200 4850 7300
 Text GLabel 6350 3650 2    50   Input ~ 0
 SD_DET
 Wire Wire Line
@@ -1151,4 +1151,15 @@ Wire Wire Line
 	9950 5600 9850 5600
 Wire Wire Line
 	9850 5600 9850 5450
+$Comp
+L Connector:USB_C_Receptacle_USB2.0 J7
+U 1 1 5EFB12FA
+P -3450 4100
+F 0 "J7" H -3343 4967 50  0000 C CNN
+F 1 "USB_C_Receptacle_USB2.0" H -3343 4876 50  0000 C CNN
+F 2 "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12" H -3300 4100 50  0001 C CNN
+F 3 "https://www.usb.org/sites/default/files/documents/usb_type-c.zip" H -3300 4100 50  0001 C CNN
+	1    -3450 4100
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

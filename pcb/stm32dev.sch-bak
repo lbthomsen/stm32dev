@@ -6,9 +6,9 @@ encoding utf-8
 Sheet 1 1
 Title "STM32 Dev Board"
 Date ""
-Rev "1"
-Comp ""
-Comment1 ""
+Rev "a"
+Comp "Lars Boegild Thomsen"
+Comment1 "lbthomsen@gmail.com"
 Comment2 ""
 Comment3 ""
 Comment4 ""
@@ -1151,4 +1151,15 @@ Wire Wire Line
 	9950 5600 9850 5600
 Wire Wire Line
 	9850 5600 9850 5450
+$Comp
+L Connector:USB_C_Receptacle J?
+U 1 1 5EF4DCDE
+P -1500 3950
+F 0 "J?" H -1393 5217 50  0000 C CNN
+F 1 "USB_C_Receptacle" H -1393 5126 50  0000 C CNN
+F 2 "" H -1350 3950 50  0001 C CNN
+F 3 "https://www.usb.org/sites/default/files/documents/usb_type-c.zip" H -1350 3950 50  0001 C CNN
+	1    -1500 3950
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
