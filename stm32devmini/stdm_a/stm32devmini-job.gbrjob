@@ -7,7 +7,7 @@
       "Application": "Pcbnew",
       "Version":     "5.1.6+dfsg1-1"
     },
-    "CreationDate":  "2020-06-23T10:35:08+08:00"
+    "CreationDate":  "2020-06-27T09:06:45+08:00"
   },
   "GeneralSpecs":
   {
@@ -15,7 +15,7 @@
     {
       "Name": "stm32devmini",
       "GUID": "73746d33-3264-4657-966d-696e692e6b69",
-      "Revision": "rev?"
+      "Revision": "a"
     },
     "Size":
     {
