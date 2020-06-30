@@ -4,12 +4,12 @@ EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
-Title "Black Pill Bis"
+Title "Green Pill Bis"
 Date ""
 Rev "a"
 Comp "Lars Boegild Thomsen"
 Comment1 "STM32 Development Board"
-Comment2 ""
+Comment2 "lbthomsen@gmail.com"
 Comment3 ""
 Comment4 ""
 $EndDescr
