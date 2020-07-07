@@ -1,0 +1,36 @@
+!SESSION 2020-07-04 20:12:57.911 -----------------------------------------------
+eclipse.buildId=Version 1.3.0
+java.version=1.8.0_242
+java.vendor=AdoptOpenJDK
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2020-07-04 20:13:38.876
+!MESSAGE Log4j initialized with config file /home/lth/src/stm32dev/firmware/.metadata/.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 4 4 2020-07-04 20:13:40.427
+!MESSAGE com.st.stm32cube.ide.mcu.ide/META-INF/version/build_ref file not found, build reference will not be reported into properties
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2020-07-04 20:13:40.904
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2020-07-04 20:15:04.669
+!MESSAGE Indexed 'led' (0 sources, 0 headers) in 0.002 sec: 0 declarations; 0 references; 0 unresolved inclusions; 0 syntax errors; 0 unresolved names (0%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2020-07-04 20:15:13.979
+!MESSAGE Indexed 'led' (20 sources, 26 headers) in 2.19 sec: 1,969 declarations; 11,856 references; 4 unresolved inclusions; 47 syntax errors; 2,019 unresolved names (13%)
+!SESSION 2020-07-05 17:17:09.364 -----------------------------------------------
+eclipse.buildId=Version 1.3.0
+java.version=1.8.0_242
+java.vendor=AdoptOpenJDK
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2020-07-05 17:17:25.141
+!MESSAGE Log4j initialized with config file /home/lth/src/stm32dev/firmware/.metadata/.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 4 4 2020-07-05 17:17:26.807
+!MESSAGE com.st.stm32cube.ide.mcu.ide/META-INF/version/build_ref file not found, build reference will not be reported into properties
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2020-07-05 17:17:28.697
+!MESSAGE Started RMI Server, listening on port 41337

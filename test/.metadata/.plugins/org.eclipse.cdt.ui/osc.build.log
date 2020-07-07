@@ -1,0 +1,10 @@
+18:23:28 **** Incremental Build of configuration Debug for project osc ****
+make -j4 all 
+arm-none-eabi-size   osc.elf 
+   text	   data	    bss	    dec	    hex	filename
+   9372	    120	   1584	  11076	   2b44	osc.elf
+Finished building: default.size.stdout
+ 
+
+18:23:29 Build Finished. 0 errors, 0 warnings. (took 518ms)
+
