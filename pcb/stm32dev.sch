@@ -262,14 +262,6 @@ F 3 "" H 8550 6100 50  0001 C CNN
 	1    8550 6100
 	1    0    0    -1  
 $EndComp
-Text GLabel 8450 5800 0    50   Input ~ 0
-RXD
-Text GLabel 8450 5700 0    50   Input ~ 0
-TXD
-Text GLabel 8450 5500 0    50   Input ~ 0
-EN
-Text GLabel 8450 6000 0    50   Input ~ 0
-0
 Wire Wire Line
 	8650 5700 8450 5700
 Wire Wire Line
@@ -285,38 +277,38 @@ Wire Wire Line
 $Comp
 L LED:WS2812B D2
 U 1 1 620C7EB0
-P -1400 -350
-F 0 "D2" H -1056 -304 50  0000 L CNN
-F 1 "WS2812B" H -1056 -395 50  0000 L CNN
-F 2 "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm" H -1350 -650 50  0001 L TNN
-F 3 "https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf" H -1300 -725 50  0001 L TNN
-F 4 "C114586" H -1400 -350 50  0001 C CNN "LCSC"
-	1    -1400 -350
+P 5100 4550
+F 0 "D2" H 5444 4596 50  0000 L CNN
+F 1 "WS2812B" H 5444 4505 50  0000 L CNN
+F 2 "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm" H 5150 4250 50  0001 L TNN
+F 3 "https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf" H 5200 4175 50  0001 L TNN
+F 4 "C114586" H 5100 4550 50  0001 C CNN "LCSC"
+	1    5100 4550
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR018
 U 1 1 620C7EBC
-P -1400 50
+P 5100 4950
 AR Path="/620C7EBC" Ref="#PWR018"  Part="1" 
 AR Path="/5DBB3EFB/620C7EBC" Ref="#PWR?"  Part="1" 
 AR Path="/5DBC2A2A/5DBB3EFB/620C7EBC" Ref="#PWR?"  Part="1" 
-F 0 "#PWR018" H -1400 -200 50  0001 C CNN
-F 1 "GND" H -1395 -123 50  0000 C CNN
-F 2 "" H -1400 50  50  0001 C CNN
-F 3 "" H -1400 50  50  0001 C CNN
-	1    -1400 50  
+F 0 "#PWR018" H 5100 4700 50  0001 C CNN
+F 1 "GND" H 5105 4777 50  0000 C CNN
+F 2 "" H 5100 4950 50  0001 C CNN
+F 3 "" H 5100 4950 50  0001 C CNN
+	1    5100 4950
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	-1400 -750 -1400 -650
+	5100 4150 5100 4250
 Wire Wire Line
-	-1400 -50  -1400 50  
-Text GLabel -1800 -350 0    50   Input ~ 0
-RGB
+	5100 4850 5100 4950
+Text GLabel 4700 4550 0    50   Input ~ 0
+PC6
 Wire Wire Line
-	-1800 -350 -1700 -350
-NoConn ~ -1100 -350
+	4700 4550 4800 4550
+NoConn ~ 5400 4550
 $Comp
 L Device:C C?
 U 1 1 620E7342
@@ -467,18 +459,14 @@ $EndComp
 $Comp
 L power:VBUS #PWR020
 U 1 1 62129ED2
-P 9900 1000
-F 0 "#PWR020" H 9900 850 50  0001 C CNN
-F 1 "VBUS" H 9915 1173 50  0000 C CNN
-F 2 "" H 9900 1000 50  0001 C CNN
-F 3 "" H 9900 1000 50  0001 C CNN
-	1    9900 1000
+P 9900 850
+F 0 "#PWR020" H 9900 700 50  0001 C CNN
+F 1 "VBUS" H 9915 1023 50  0000 C CNN
+F 2 "" H 9900 850 50  0001 C CNN
+F 3 "" H 9900 850 50  0001 C CNN
+	1    9900 850 
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	9900 1000 9900 2700
-Wire Wire Line
-	9900 2700 10300 2700
 Text GLabel 4600 5950 0    50   Input ~ 0
 SD_D2
 Text GLabel 4600 6050 0    50   Input ~ 0
@@ -571,14 +559,10 @@ Wire Wire Line
 	8250 3450 8150 3450
 Wire Wire Line
 	8150 3550 8250 3550
-Text GLabel 10000 3900 0    50   Input ~ 0
-PB7_SDA
-Text GLabel 10000 4000 0    50   Input ~ 0
-PB6_SCL
 Wire Wire Line
-	10000 3900 10300 3900
+	9650 3900 10300 3900
 Wire Wire Line
-	10300 4000 10000 4000
+	10300 4000 9650 4000
 Text GLabel 8250 2150 2    50   Input ~ 0
 PA10
 Text GLabel 8250 2050 2    50   Input ~ 0
@@ -594,13 +578,13 @@ Wire Wire Line
 Text GLabel 8250 3250 2    50   Input ~ 0
 PB4
 Text GLabel 8250 3150 2    50   Input ~ 0
-PB3
+SWO
 Text GLabel 8250 2550 2    50   Input ~ 0
-PA14
+SWCLK
 Text GLabel 8250 2650 2    50   Input ~ 0
 PA15
 Text GLabel 8250 2450 2    50   Input ~ 0
-PA13
+SWDIO
 Wire Wire Line
 	8250 2450 8150 2450
 Wire Wire Line
@@ -611,26 +595,16 @@ Wire Wire Line
 	8250 3150 8150 3150
 Wire Wire Line
 	8150 3250 8250 3250
-Text GLabel 10000 4100 0    50   Input ~ 0
-PB4_JRST
 Wire Wire Line
-	10000 4100 10300 4100
-Text GLabel 10000 4200 0    50   Input ~ 0
-PB3_JDO
+	9650 4100 10300 4100
 Wire Wire Line
-	10000 4200 10300 4200
-Text GLabel 10000 4300 0    50   Input ~ 0
-PA15_JDI
+	9650 4200 10300 4200
 Wire Wire Line
-	10000 4300 10300 4300
-Text GLabel 10000 4400 0    50   Input ~ 0
-PA14_JCLK
-Text GLabel 10000 4500 0    50   Input ~ 0
-PA13_JMS
+	9650 4300 10300 4300
 Wire Wire Line
-	10000 4400 10300 4400
+	9650 4400 10300 4400
 Wire Wire Line
-	10300 4500 10000 4500
+	10300 4500 9650 4500
 Text GLabel 8250 1550 2    50   Input ~ 0
 PA4
 Text GLabel 8250 1650 2    50   Input ~ 0
@@ -639,10 +613,6 @@ Wire Wire Line
 	8250 1550 8150 1550
 Wire Wire Line
 	8150 1650 8250 1650
-Text GLabel 9650 1900 0    50   Input ~ 0
-PA4_AO0
-Text GLabel 9650 2000 0    50   Input ~ 0
-PA5_AO1
 Wire Wire Line
 	10300 2000 9650 2000
 Wire Wire Line
@@ -655,18 +625,14 @@ Wire Wire Line
 	8150 1750 8250 1750
 Wire Wire Line
 	8150 1850 8250 1850
-Text GLabel 9650 2100 0    50   Input ~ 0
-PA6_AI0
-Text GLabel 9650 2200 0    50   Input ~ 0
-PA7_AI1
 Wire Wire Line
 	9650 2100 10300 2100
 Wire Wire Line
 	9650 2200 10300 2200
 Text GLabel 6650 3050 0    50   Input ~ 0
-PC2_MISO
+PC2
 Text GLabel 6650 3150 0    50   Input ~ 0
-PC3_MOSI
+PC3
 Text GLabel 8250 3850 2    50   Input ~ 0
 PB10
 Wire Wire Line
@@ -675,16 +641,10 @@ Wire Wire Line
 	6650 3150 6750 3150
 Wire Wire Line
 	8250 3850 8150 3850
-Text GLabel 9650 1200 0    50   Input ~ 0
-PC2_MISO
-Text GLabel 9650 1300 0    50   Input ~ 0
-PC3_MOSI
 Wire Wire Line
 	9650 1200 10300 1200
 Wire Wire Line
 	10300 1300 9650 1300
-Text GLabel 9650 1400 0    50   Input ~ 0
-PB10_SCK
 Wire Wire Line
 	9650 1400 10300 1400
 Text GLabel 8250 3650 2    50   Input ~ 0
@@ -695,14 +655,10 @@ Wire Wire Line
 	8250 3650 8150 3650
 Wire Wire Line
 	8150 3750 8250 3750
-Text GLabel 10000 3700 0    50   Input ~ 0
-PB9_CAN1_RX
-Text GLabel 10000 3800 0    50   Input ~ 0
-PB8_CAN1_TX
 Wire Wire Line
-	10000 3700 10300 3700
+	9650 3700 10300 3700
 Wire Wire Line
-	10300 3800 10000 3800
+	10300 3800 9650 3800
 Wire Wire Line
 	8250 2350 8150 2350
 Text GLabel 6650 1150 0    50   Input ~ 0
@@ -723,14 +679,6 @@ Wire Wire Line
 	8150 1150 8250 1150
 Wire Wire Line
 	8250 1250 8150 1250
-Text GLabel 9650 1500 0    50   Input ~ 0
-PA0
-Text GLabel 9650 1600 0    50   Input ~ 0
-PA1
-Text GLabel 9650 1700 0    50   Input ~ 0
-PA2_U2_TX
-Text GLabel 9650 1800 0    50   Input ~ 0
-PA3_U2_RX
 Wire Wire Line
 	9650 1500 10300 1500
 Wire Wire Line
@@ -768,14 +716,10 @@ Wire Wire Line
 	8250 4050 8150 4050
 Wire Wire Line
 	8150 4150 8250 4150
-Text GLabel 10000 4900 0    50   Input ~ 0
-PB12_CAN2_RX
-Text GLabel 10000 4800 0    50   Input ~ 0
-PB13_CAN2_TX
 Wire Wire Line
-	10000 4800 10300 4800
+	9650 4800 10300 4800
 Wire Wire Line
-	10000 4900 10300 4900
+	9650 4900 10300 4900
 Text GLabel 8250 1350 2    50   Input ~ 0
 PA2
 Text GLabel 6650 3450 0    50   Input ~ 0
@@ -784,14 +728,10 @@ Wire Wire Line
 	6650 3450 6750 3450
 Wire Wire Line
 	6650 3550 6750 3550
-Text GLabel 10000 4700 0    50   Input ~ 0
-PC6
-Text GLabel 10000 4600 0    50   Input ~ 0
-PC7
 Wire Wire Line
-	10000 4700 10300 4700
+	9650 4700 10300 4700
 Wire Wire Line
-	10300 4600 10000 4600
+	10300 4600 9650 4600
 $Comp
 L power:GND #PWR023
 U 1 1 62493B6C
@@ -806,19 +746,7 @@ $EndComp
 Wire Wire Line
 	10200 5350 10200 5200
 Wire Wire Line
-	10200 3300 10300 3300
-Connection ~ 10200 5200
-Wire Wire Line
-	10200 5200 10200 3300
-Wire Wire Line
 	10200 5200 10300 5200
-NoConn ~ 6750 2850
-NoConn ~ 6750 2950
-NoConn ~ 6750 3250
-NoConn ~ 6750 3350
-NoConn ~ 6750 4150
-NoConn ~ 6750 4250
-NoConn ~ 6750 4350
 $Comp
 L Device:D_Schottky D3
 U 1 1 626A75C5
@@ -934,12 +862,12 @@ $EndComp
 $Comp
 L power:+3.3V #PWR0107
 U 1 1 5F0C0595
-P -1400 -750
-F 0 "#PWR0107" H -1400 -900 50  0001 C CNN
-F 1 "+3.3V" H -1385 -577 50  0000 C CNN
-F 2 "" H -1400 -750 50  0001 C CNN
-F 3 "" H -1400 -750 50  0001 C CNN
-	1    -1400 -750
+P 5100 4150
+F 0 "#PWR0107" H 5100 4000 50  0001 C CNN
+F 1 "+3.3V" H 5115 4323 50  0000 C CNN
+F 2 "" H 5100 4150 50  0001 C CNN
+F 3 "" H 5100 4150 50  0001 C CNN
+	1    5100 4150
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -1047,18 +975,14 @@ Connection ~ 2950 950
 $Comp
 L power:+3.3V #PWR0111
 U 1 1 5F15A429
-P 10100 1000
-F 0 "#PWR0111" H 10100 850 50  0001 C CNN
-F 1 "+3.3V" H 10115 1173 50  0000 C CNN
-F 2 "" H 10100 1000 50  0001 C CNN
-F 3 "" H 10100 1000 50  0001 C CNN
-	1    10100 1000
+P 10100 850
+F 0 "#PWR0111" H 10100 700 50  0001 C CNN
+F 1 "+3.3V" H 10115 1023 50  0000 C CNN
+F 2 "" H 10100 850 50  0001 C CNN
+F 3 "" H 10100 850 50  0001 C CNN
+	1    10100 850 
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	10100 2600 10300 2600
-Wire Wire Line
-	10100 1000 10100 2600
 Text GLabel 8250 1950 2    50   Input ~ 0
 PA8
 Wire Wire Line
@@ -1626,4 +1550,138 @@ F 3 "" H 750 850 50  0001 C CNN
 $EndComp
 Text GLabel 8250 3350 2    50   Input ~ 0
 PB5
+Text GLabel 8450 5700 0    50   Input ~ 0
+SWCLK
+Text GLabel 8450 5800 0    50   Input ~ 0
+SWDIO
+Text GLabel 8450 6000 0    50   Input ~ 0
+SWO
+Text GLabel 6650 2850 0    50   Input ~ 0
+PC0
+Text GLabel 6650 2950 0    50   Input ~ 0
+PC1
+Text GLabel 6650 3250 0    50   Input ~ 0
+PC4
+Text GLabel 6650 3350 0    50   Input ~ 0
+PC5
+Wire Wire Line
+	6650 2850 6750 2850
+Wire Wire Line
+	6650 2950 6750 2950
+Text GLabel 9650 1000 0    50   Input ~ 0
+PC0
+Text GLabel 9650 1100 0    50   Input ~ 0
+PC1
+Text GLabel 9650 1200 0    50   Input ~ 0
+PC2
+Text GLabel 9650 1300 0    50   Input ~ 0
+PC3
+Wire Wire Line
+	6650 3250 6750 3250
+Wire Wire Line
+	6650 3350 6750 3350
+Text GLabel 6650 4150 0    50   Input ~ 0
+PC13
+Text GLabel 6650 4250 0    50   Input ~ 0
+PC14
+Text GLabel 6650 4350 0    50   Input ~ 0
+PC15
+Wire Wire Line
+	6650 4150 6750 4150
+Wire Wire Line
+	6750 4250 6650 4250
+Wire Wire Line
+	6650 4350 6750 4350
+Wire Wire Line
+	9650 1100 10300 1100
+Wire Wire Line
+	9650 1000 10300 1000
+Text GLabel 9650 1400 0    50   Input ~ 0
+PA0
+Text GLabel 9650 1500 0    50   Input ~ 0
+PA1
+Text GLabel 9650 1600 0    50   Input ~ 0
+PA2
+Text GLabel 9650 1700 0    50   Input ~ 0
+PA3
+Text GLabel 9650 1800 0    50   Input ~ 0
+PA4
+Text GLabel 9650 1900 0    50   Input ~ 0
+PA5
+Text GLabel 9650 2000 0    50   Input ~ 0
+PA6
+Text GLabel 9650 2100 0    50   Input ~ 0
+PA7
+Wire Wire Line
+	9650 2300 10300 2300
+Wire Wire Line
+	10300 2400 9650 2400
+Wire Wire Line
+	10100 2700 10300 2700
+Wire Wire Line
+	10100 850  10100 2700
+Wire Wire Line
+	9900 5100 10300 5100
+Wire Wire Line
+	9900 850  9900 5100
+Text GLabel 9650 2200 0    50   Input ~ 0
+PC4
+Text GLabel 9650 2300 0    50   Input ~ 0
+PC5
+Wire Wire Line
+	10300 2500 9650 2500
+Wire Wire Line
+	9650 2600 10300 2600
+Text GLabel 9650 2400 0    50   Input ~ 0
+PB0
+Text GLabel 9650 2500 0    50   Input ~ 0
+PB1
+Wire Wire Line
+	10300 5000 9650 5000
+Text GLabel 9650 2600 0    50   Input ~ 0
+PB2
+Text GLabel 9650 5000 0    50   Input ~ 0
+PB10
+Text GLabel 9650 4900 0    50   Input ~ 0
+PB11
+Text GLabel 9650 4800 0    50   Input ~ 0
+PB12
+Text GLabel 9650 4700 0    50   Input ~ 0
+PB13
+Text GLabel 9650 4600 0    50   Input ~ 0
+PB14
+Text GLabel 9650 4500 0    50   Input ~ 0
+PB15
+Text GLabel 9650 4400 0    50   Input ~ 0
+PA8
+Text GLabel 9650 4300 0    50   Input ~ 0
+PA9
+Text GLabel 9650 4200 0    50   Input ~ 0
+PA10
+Text GLabel 9650 4100 0    50   Input ~ 0
+PA11
+Text GLabel 9650 4000 0    50   Input ~ 0
+PA12
+Text GLabel 9650 3900 0    50   Input ~ 0
+PA15
+Text GLabel 9650 3800 0    50   Input ~ 0
+PB4
+Text GLabel 9650 3700 0    50   Input ~ 0
+PB5
+Text GLabel 9650 3600 0    50   Input ~ 0
+PB6
+Text GLabel 9650 3500 0    50   Input ~ 0
+PB7
+Wire Wire Line
+	9650 3600 10300 3600
+Wire Wire Line
+	10300 3500 9650 3500
+Text GLabel 9650 3400 0    50   Input ~ 0
+PB8
+Text GLabel 9650 3300 0    50   Input ~ 0
+PB9
+Wire Wire Line
+	9650 3400 10300 3400
+Wire Wire Line
+	10300 3300 9650 3300
 $EndSCHEMATC
