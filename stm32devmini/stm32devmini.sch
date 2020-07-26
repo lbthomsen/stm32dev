@@ -112,12 +112,12 @@ $EndComp
 $Comp
 L Connector_Generic:Conn_01x20 J2
 U 1 1 5EF5C946
-P 10750 1800
-F 0 "J2" H 10830 1746 50  0000 L CNN
-F 1 "~" H 10830 1701 50  0000 L CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x20_P2.54mm_Vertical" H 10750 1800 50  0001 C CNN
-F 3 "~" H 10750 1800 50  0001 C CNN
-	1    10750 1800
+P 10750 2100
+F 0 "J2" H 10830 2046 50  0000 L CNN
+F 1 "~" H 10830 2001 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x20_P2.54mm_Vertical" H 10750 2100 50  0001 C CNN
+F 3 "~" H 10750 2100 50  0001 C CNN
+	1    10750 2100
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -484,30 +484,30 @@ Wire Wire Line
 Connection ~ 7600 4450
 Wire Wire Line
 	7600 4450 7700 4450
-Text GLabel 9900 1000 0    50   Input ~ 0
-C13
-Text GLabel 9900 1100 0    50   Input ~ 0
-C14
-Text GLabel 9900 1200 0    50   Input ~ 0
-C15
-Wire Wire Line
-	9900 1000 10550 1000
-Wire Wire Line
-	10550 1100 9900 1100
-Wire Wire Line
-	9900 1200 10550 1200
 Text GLabel 9900 1300 0    50   Input ~ 0
-A0
+C13
 Text GLabel 9900 1400 0    50   Input ~ 0
-A1
+C14
 Text GLabel 9900 1500 0    50   Input ~ 0
-A2
+C15
 Wire Wire Line
 	9900 1300 10550 1300
 Wire Wire Line
 	10550 1400 9900 1400
 Wire Wire Line
 	9900 1500 10550 1500
+Text GLabel 9900 1600 0    50   Input ~ 0
+A0
+Text GLabel 9900 1700 0    50   Input ~ 0
+A1
+Text GLabel 9900 1800 0    50   Input ~ 0
+A2
+Wire Wire Line
+	9900 1600 10550 1600
+Wire Wire Line
+	10550 1700 9900 1700
+Wire Wire Line
+	9900 1800 10550 1800
 Text GLabel 10050 3850 0    50   Input ~ 0
 B9
 Text GLabel 10050 3950 0    50   Input ~ 0
@@ -575,41 +575,41 @@ Wire Wire Line
 Wire Wire Line
 	10050 5450 10550 5450
 Wire Wire Line
-	9900 1600 10550 1600
-Text GLabel 9900 1600 0    50   Input ~ 0
-A3
-Text GLabel 9900 1700 0    50   Input ~ 0
-A4
-Text GLabel 9900 1800 0    50   Input ~ 0
-A5
+	9900 1900 10550 1900
 Text GLabel 9900 1900 0    50   Input ~ 0
-A6
+A3
 Text GLabel 9900 2000 0    50   Input ~ 0
-A7
-Wire Wire Line
-	9900 2000 10550 2000
-Wire Wire Line
-	10550 1900 9900 1900
-Wire Wire Line
-	9900 1800 10550 1800
-Wire Wire Line
-	10550 1700 9900 1700
+A4
 Text GLabel 9900 2100 0    50   Input ~ 0
-B0
+A5
 Text GLabel 9900 2200 0    50   Input ~ 0
-B1
-Text GLabel 9900 2400 0    50   Input ~ 0
-B10
-Text GLabel 9900 2500 0    50   Input ~ 0
-B11
-Wire Wire Line
-	9900 2100 10550 2100
-Wire Wire Line
-	10550 2200 9900 2200
+A6
+Text GLabel 9900 2300 0    50   Input ~ 0
+A7
 Wire Wire Line
 	9900 2300 10550 2300
 Wire Wire Line
+	10550 2200 9900 2200
+Wire Wire Line
+	9900 2100 10550 2100
+Wire Wire Line
+	10550 2000 9900 2000
+Text GLabel 9900 2400 0    50   Input ~ 0
+B0
+Text GLabel 9900 2500 0    50   Input ~ 0
+B1
+Text GLabel 9900 2700 0    50   Input ~ 0
+B10
+Text GLabel 9900 2800 0    50   Input ~ 0
+B11
+Wire Wire Line
 	9900 2400 10550 2400
+Wire Wire Line
+	10550 2500 9900 2500
+Wire Wire Line
+	9900 2600 10550 2600
+Wire Wire Line
+	9900 2700 10550 2700
 Text GLabel 2650 3650 2    50   Input ~ 0
 A12
 Text GLabel 2650 3450 2    50   Input ~ 0
@@ -1016,39 +1016,39 @@ Connection ~ 1700 3650
 Wire Wire Line
 	1700 3650 1600 3650
 Wire Wire Line
-	10450 900  10550 900 
+	10450 1200 10550 1200
 $Comp
 L power:+3.3V #PWR031
 U 1 1 5EF5F475
-P 10000 800
-F 0 "#PWR031" H 10000 650 50  0001 C CNN
-F 1 "+3.3V" H 10015 973 50  0000 C CNN
-F 2 "" H 10000 800 50  0001 C CNN
-F 3 "" H 10000 800 50  0001 C CNN
-	1    10000 800 
+P 10000 1100
+F 0 "#PWR031" H 10000 950 50  0001 C CNN
+F 1 "+3.3V" H 10015 1273 50  0000 C CNN
+F 2 "" H 10000 1100 50  0001 C CNN
+F 3 "" H 10000 1100 50  0001 C CNN
+	1    10000 1100
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	10000 2600 10550 2600
+	10000 2900 10550 2900
 Wire Wire Line
-	10000 800  10000 2600
+	10000 1100 10000 2900
 Wire Wire Line
-	9900 2500 10550 2500
+	9900 2800 10550 2800
 $Comp
 L power:GND #PWR034
 U 1 1 5EF9371A
-P 10450 2900
-F 0 "#PWR034" H 10450 2650 50  0001 C CNN
-F 1 "GND" H 10455 2727 50  0000 C CNN
-F 2 "" H 10450 2900 50  0001 C CNN
-F 3 "" H 10450 2900 50  0001 C CNN
-	1    10450 2900
+P 10450 3200
+F 0 "#PWR034" H 10450 2950 50  0001 C CNN
+F 1 "GND" H 10455 3027 50  0000 C CNN
+F 2 "" H 10450 3200 50  0001 C CNN
+F 3 "" H 10450 3200 50  0001 C CNN
+	1    10450 3200
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	10450 2900 10450 2800
+	10450 3200 10450 3100
 Wire Wire Line
-	10550 2800 10450 2800
+	10550 3100 10450 3100
 $Comp
 L Device:R R5
 U 1 1 5EF5EBD1
@@ -1269,12 +1269,12 @@ Wire Wire Line
 $Comp
 L power:+5V #PWR0101
 U 1 1 5F1B0776
-P 10200 800
-F 0 "#PWR0101" H 10200 650 50  0001 C CNN
-F 1 "+5V" H 10215 973 50  0000 C CNN
-F 2 "" H 10200 800 50  0001 C CNN
-F 3 "" H 10200 800 50  0001 C CNN
-	1    10200 800 
+P 10200 1100
+F 0 "#PWR0101" H 10200 950 50  0001 C CNN
+F 1 "+5V" H 10215 1273 50  0000 C CNN
+F 2 "" H 10200 1100 50  0001 C CNN
+F 3 "" H 10200 1100 50  0001 C CNN
+	1    10200 1100
 	1    0    0    -1  
 $EndComp
 Wire Notes Line
@@ -1308,12 +1308,12 @@ Wire Notes Line
 Text Notes 550  2400 0    50   ~ 0
 USB C Connection
 Wire Wire Line
-	10450 900  10450 2800
-Connection ~ 10450 2800
+	10450 1200 10450 3100
+Connection ~ 10450 3100
 Wire Wire Line
-	10550 2700 10200 2700
+	10550 3000 10200 3000
 Wire Wire Line
-	10200 2700 10200 800 
+	10200 3000 10200 1100
 Wire Wire Line
 	10550 3550 10450 3550
 Wire Wire Line
@@ -1328,9 +1328,9 @@ Wire Wire Line
 	10550 3750 10050 3750
 Text GLabel 6800 2850 0    50   Input ~ 0
 B2
-Text GLabel 9900 2300 0    50   Input ~ 0
+Text GLabel 9900 2600 0    50   Input ~ 0
 B2
-Text Notes 9450 6350 0    50   ~ 0
+Text Notes 9350 6350 0    50   ~ 0
 NOTICE!  Headers are mostly but NOT\n100 % compatible with the blue/black pill.
 $Comp
 L power:PWR_FLAG #FLG0101
@@ -1461,4 +1461,46 @@ Wire Wire Line
 Connection ~ 2200 6450
 Wire Wire Line
 	2200 6450 2200 6550
+Wire Notes Line
+	9300 700  9300 6400
+Wire Notes Line
+	9300 6400 11000 6400
+Wire Notes Line
+	11000 6400 11000 700 
+Wire Notes Line
+	11000 700  9300 700 
+Text Notes 4350 650  0    50   ~ 0
+Processor
+Text Notes 9300 650  0    50   ~ 0
+Pin Headers
+Wire Notes Line
+	550  7450 2700 7450
+Wire Notes Line
+	2700 7450 2700 5450
+Wire Notes Line
+	2700 5450 550  5450
+Wire Notes Line
+	550  5450 550  7450
+Text Notes 550  5400 0    50   ~ 0
+Reset & Boot Mode
+Wire Notes Line
+	3050 7450 4550 7450
+Wire Notes Line
+	4550 7450 4550 5450
+Wire Notes Line
+	4550 5450 3050 5450
+Wire Notes Line
+	3050 5450 3050 7450
+Text Notes 3050 5400 0    50   ~ 0
+LEDs
+Wire Notes Line
+	4850 7450 6250 7450
+Wire Notes Line
+	6250 7450 6250 5450
+Wire Notes Line
+	6250 5450 4850 5450
+Wire Notes Line
+	4850 5450 4850 7450
+Text Notes 4850 5400 0    50   ~ 0
+Programming Header
 $EndSCHEMATC
