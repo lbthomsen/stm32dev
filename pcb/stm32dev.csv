@@ -1,7 +1,7 @@
 Comment,Designator,Footprint,LCSC
 "10uF","C1,C3","Capacitor_SMD:C_0805_2012Metric","C15850"
 "20pF","C10,C11","Capacitor_SMD:C_0402_1005Metric","C1554"
-"2.2uF","C13,C12","Capacitor_SMD:C_0402_1005Metric","C12530"
+"2.2uF","C13,C12","Capacitor_SMD:C_0603_1608Metric","C23630"
 "1uF","C4","Capacitor_SMD:C_0402_1005Metric","C52923"
 "100nF","C5,C6,C7,C8,C2","Capacitor_SMD:C_0402_1005Metric","C1525"
 "10nF","C9","Capacitor_SMD:C_0402_1005Metric","C15195"
