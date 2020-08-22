@@ -35,12 +35,16 @@
 
 #define BUFFER_SIZE 24
 
+// LED on/off counts
+#define LED_OFF 32
+#define LED_ON 67
+
 // Define LED driver state machine states
 #define LED_RES 0 // Reset state - all values should be 0 for 2 buffers
 #define LED_DAT 1 // Data state - values should be taken from led_values
 
-#define LED_ROWS 1
-#define LED_COLS 1
+#define LED_ROWS 8
+#define LED_COLS 8
 #define R 0
 #define G 1
 #define B 2
@@ -58,13 +62,14 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 /* USER CODE BEGIN PV */
 
-uint16_t buffer[BUFFER_SIZE * 4] = { 0 };
+uint16_t dma_buffer[BUFFER_SIZE * 2] = { 0 };
 
-void *buffer_pointer;
+uint16_t *dma_buffer_pointer;
 
 uint8_t led_value[LED_ROWS][LED_COLS][3] = { 0 };
 
 uint8_t led_state = LED_RES;
+uint8_t res_cnt = 0;
 uint8_t led_col = 0;
 uint8_t led_row = 0;
 
@@ -91,95 +96,117 @@ int _write(int file, char *ptr, int len) {
 	return len;
 }
 
-//// Done sending first half of the DMA buffer - this can now safely be updated
-//void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
-//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-//	if (htim->Instance == TIM3) {
-//		buffer_pointer = &buffer[BUFFER_SIZE];
+// Update next 24 bit in the dma buffer - assume dma_buffer_pointer is pointing to
+void update_buffer_next() {
+
+	if (led_state == LED_RES) { // Reset Cycle - two full buffers of zeros
+		for (uint8_t i = 0; i < BUFFER_SIZE; i++) {
+			*(uint16_t*) dma_buffer_pointer = (uint16_t) 0;
+			dma_buffer_pointer++;
+		}
+		res_cnt++;
+		if (res_cnt == 2) { // done enough reset cycles
+			led_col = 0;	// prepare to send data
+			led_row = 0;
+			led_state = LED_DAT;
+		}
+	} else { // LED cycle
+
+	}
+
+}
+
+// Done sending first half of the DMA buffer - this can now safely be updated
+void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	if (htim->Instance == TIM3) {
+		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
+		update_buffer_next();
 //		for (uint8_t i = 0; i < BUFFER_SIZE; i++) {
 //			buffer_pointer = &buffer[BUFFER_SIZE + i];
 //			*(uint16_t*) buffer_pointer = (uint16_t) 68;
 //			buffer_pointer++;
 //		}
-//	}
-//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-//}
-//
-//// Done sending the second half of the DMA buffer - this can now be safely updated
-//void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-//	if (htim->Instance == TIM3) {
-//		buffer_pointer = &buffer[0];
+	}
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+}
+
+// Done sending the second half of the DMA buffer - this can now be safely updated
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	if (htim->Instance == TIM3) {
+		dma_buffer_pointer = &dma_buffer[0];
+		update_buffer_next();
 //		for (uint8_t i = 0; i < BUFFER_SIZE; i++) {
 //			buffer_pointer = &buffer[i];
 //			*(uint16_t*) buffer_pointer = (uint16_t) 31;
 //			buffer_pointer++;
 //		}
-//	}
-//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-//}
+	}
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+}
 
 void setLedValue(uint8_t row, uint8_t col, uint8_t r, uint8_t g, uint8_t b) {
 
-//	led_value[row][col][R] = r;
-//	led_value[row][col][G] = g;
-//	led_value[row][col][B] = b;
+	led_value[row][col][R] = r;
+	led_value[row][col][G] = g;
+	led_value[row][col][B] = b;
 
-// Green msb first
-	buffer[48] = (g >> 7 && 1) * 33 + 34;
-	buffer[49] = (g >> 6 && 1) * 33 + 34;
-	buffer[50] = (g >> 5 && 1) * 33 + 34;
-	buffer[51] = (g >> 4 && 1) * 33 + 34;
-	buffer[52] = (g >> 3 && 1) * 33 + 34;
-	buffer[53] = (g >> 2 && 1) * 33 + 34;
-	buffer[54] = (g >> 1 && 1) * 33 + 34;
-	buffer[55] = (g && 1) * 33 + 34;
-	// Red msb first
-	buffer[56] = (r >> 7 && 1) * 33 + 34;
-	buffer[57] = (r >> 6 && 1) * 33 + 34;
-	buffer[58] = (r >> 5 && 1) * 33 + 34;
-	buffer[59] = (r >> 4 && 1) * 33 + 34;
-	buffer[60] = (r >> 3 && 1) * 33 + 34;
-	buffer[61] = (r >> 2 && 1) * 33 + 34;
-	buffer[62] = (r >> 1 && 1) * 33 + 34;
-	buffer[63] = (r && 1) * 33 + 34;
-	// Blue msb first
-	buffer[64] = (b >> 7 && 1) * 33 + 34;
-	buffer[65] = (b >> 6 && 1) * 33 + 34;
-	buffer[66] = (b >> 5 && 1) * 33 + 34;
-	buffer[67] = (b >> 4 && 1) * 33 + 34;
-	buffer[68] = (b >> 3 && 1) * 33 + 34;
-	buffer[69] = (b >> 2 && 1) * 33 + 34;
-	buffer[70] = (b >> 1 && 1) * 33 + 34;
-	buffer[71] = (b && 1) * 33 + 34;
-
-	// Green msb first
-	buffer[72] = 34;
-	buffer[73] = 34;
-	buffer[74] = 34;
-	buffer[75] = 34;
-	buffer[76] = 34;
-	buffer[77] = 34;
-	buffer[78] = 34;
-	buffer[79] = 34;
-	// Red msb first
-	buffer[80] = 34;
-	buffer[81] = 34;
-	buffer[82] = 34;
-	buffer[83] = 34;
-	buffer[84] = 34;
-	buffer[85] = 34;
-	buffer[86] = 34;
-	buffer[87] = 34;
-	// Blue msb first
-	buffer[88] = 34;
-	buffer[89] = 34;
-	buffer[90] = 34;
-	buffer[91] = 34;
-	buffer[92] = 34;
-	buffer[93] = 34;
-	buffer[94] = 34;
-	buffer[95] = 34;
+//// Green msb first
+//	buffer[48] = (g >> 7 && 1) * 33 + 34;
+//	buffer[49] = (g >> 6 && 1) * 33 + 34;
+//	buffer[50] = (g >> 5 && 1) * 33 + 34;
+//	buffer[51] = (g >> 4 && 1) * 33 + 34;
+//	buffer[52] = (g >> 3 && 1) * 33 + 34;
+//	buffer[53] = (g >> 2 && 1) * 33 + 34;
+//	buffer[54] = (g >> 1 && 1) * 33 + 34;
+//	buffer[55] = (g && 1) * 33 + 34;
+//	// Red msb first
+//	buffer[56] = (r >> 7 && 1) * 33 + 34;
+//	buffer[57] = (r >> 6 && 1) * 33 + 34;
+//	buffer[58] = (r >> 5 && 1) * 33 + 34;
+//	buffer[59] = (r >> 4 && 1) * 33 + 34;
+//	buffer[60] = (r >> 3 && 1) * 33 + 34;
+//	buffer[61] = (r >> 2 && 1) * 33 + 34;
+//	buffer[62] = (r >> 1 && 1) * 33 + 34;
+//	buffer[63] = (r && 1) * 33 + 34;
+//	// Blue msb first
+//	buffer[64] = (b >> 7 && 1) * 33 + 34;
+//	buffer[65] = (b >> 6 && 1) * 33 + 34;
+//	buffer[66] = (b >> 5 && 1) * 33 + 34;
+//	buffer[67] = (b >> 4 && 1) * 33 + 34;
+//	buffer[68] = (b >> 3 && 1) * 33 + 34;
+//	buffer[69] = (b >> 2 && 1) * 33 + 34;
+//	buffer[70] = (b >> 1 && 1) * 33 + 34;
+//	buffer[71] = (b && 1) * 33 + 34;
+//
+//	// Green msb first
+//	buffer[72] = 34;
+//	buffer[73] = 34;
+//	buffer[74] = 34;
+//	buffer[75] = 34;
+//	buffer[76] = 34;
+//	buffer[77] = 34;
+//	buffer[78] = 34;
+//	buffer[79] = 34;
+//	// Red msb first
+//	buffer[80] = 34;
+//	buffer[81] = 34;
+//	buffer[82] = 34;
+//	buffer[83] = 34;
+//	buffer[84] = 34;
+//	buffer[85] = 34;
+//	buffer[86] = 34;
+//	buffer[87] = 34;
+//	// Blue msb first
+//	buffer[88] = 34;
+//	buffer[89] = 34;
+//	buffer[90] = 34;
+//	buffer[91] = 34;
+//	buffer[92] = 34;
+//	buffer[93] = 34;
+//	buffer[94] = 34;
+//	buffer[95] = 34;
 }
 
 /* USER CODE END 0 */
@@ -217,14 +244,14 @@ int main(void) {
 
 	// Set buffer appropriately
 	//setLedValue(0, 0, 5);
-	setLedValue(0, 0, 0, 10, 0);
+	setLedValue(0, 0, 0, 0, 0);
 
 	// Start the timer to get the PWM going
 	HAL_TIM_Base_Start(&htim3);
 
 	// Start DMA to feed the PWM with values
-	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) buffer,
-	BUFFER_SIZE * 4);
+	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
+	BUFFER_SIZE * 2);
 
 	HAL_Delay(100);
 
@@ -236,6 +263,7 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 
 	setLedValue(0, 0, 50, 0, 0);
+
 	uint32_t then = 0;
 
 	while (1) {
@@ -316,7 +344,7 @@ static void MX_TIM3_Init(void) {
 
 	/* USER CODE END TIM3_Init 1 */
 	htim3.Instance = TIM3;
-	htim3.Init.Prescaler = 0;
+	htim3.Init.Prescaler = 99;
 	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim3.Init.Period = 104;
 	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
