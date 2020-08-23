@@ -6,13 +6,13 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * <h2><center>&copy; Copyright (c) 2020 Lars Thomsen &lt;lbthomsen@gmail.com&gt;
  * All rights reserved.</center></h2>
  *
- * This software component is licensed by ST under BSD 3-Clause license,
+ * This software component is licensed by ST under MIT license,
  * the "License"; You may not use this file except in compliance with the
  * License. You may obtain a copy of the License at:
- *                        opensource.org/licenses/BSD-3-Clause
+ *                        opensource.org/licenses/MIT
  *
  ******************************************************************************
  */
@@ -37,7 +37,7 @@
 
 // LED on/off counts
 #define LED_OFF 32
-#define LED_ON 67
+#define LED_DIFF 36
 
 // Define LED driver state machine states
 #define LED_RES 0 // Reset state - all values should be 0 for 2 buffers
@@ -73,8 +73,9 @@ uint8_t res_cnt = 0;
 uint8_t led_col = 0;
 uint8_t led_row = 0;
 
-uint32_t cnt_full = 0;
-uint32_t cnt_half = 0;
+uint32_t update_count = 0;
+//uint32_t cnt_full = 0;
+//uint32_t cnt_half = 0;
 
 /* USER CODE END PV */
 
@@ -96,7 +97,13 @@ int _write(int file, char *ptr, int len) {
 	return len;
 }
 
-// Update next 24 bit in the dma buffer - assume dma_buffer_pointer is pointing to
+/*
+ * Update next 24 bits in the dma buffer - assume dma_buffer_pointer is pointing
+ * to the buffer that is safe to update.
+ *
+ * At the moment this one is in dire need of optimization!
+ *
+ */
 void update_buffer_next() {
 
 	if (led_state == LED_RES) { // Reset Cycle - two full buffers of zeros
@@ -111,24 +118,39 @@ void update_buffer_next() {
 			led_state = LED_DAT;
 		}
 	} else { // LED cycle
-
+		// First let's deal with the current LED
+		for (uint8_t c = 0; c < 3; c++) {
+			// Now deal with each bit
+			for (uint8_t b = 0; b < 8; b++) {
+				*(uint16_t*) dma_buffer_pointer =
+						(uint16_t) (led_value[led_col][led_row][c] >> (7 - b)
+								&& 1) * LED_DIFF + LED_OFF;
+				dma_buffer_pointer++;
+			}
+		}
+		// Now move to next LED
+		led_col++; // Next column
+		if (led_col >= LED_COLS) { // reached top
+			led_col = 0; // back to first
+			led_row++; // and move on to next row
+			if (led_row >= LED_ROWS) { // reached end
+				update_count++;
+				res_cnt = 0;
+				led_state = LED_RES;
+			}
+		}
 	}
 
 }
 
 // Done sending first half of the DMA buffer - this can now safely be updated
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 	if (htim->Instance == TIM3) {
 		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
 		update_buffer_next();
-//		for (uint8_t i = 0; i < BUFFER_SIZE; i++) {
-//			buffer_pointer = &buffer[BUFFER_SIZE + i];
-//			*(uint16_t*) buffer_pointer = (uint16_t) 68;
-//			buffer_pointer++;
-//		}
 	}
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 }
 
 // Done sending the second half of the DMA buffer - this can now be safely updated
@@ -137,114 +159,57 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM3) {
 		dma_buffer_pointer = &dma_buffer[0];
 		update_buffer_next();
-//		for (uint8_t i = 0; i < BUFFER_SIZE; i++) {
-//			buffer_pointer = &buffer[i];
-//			*(uint16_t*) buffer_pointer = (uint16_t) 31;
-//			buffer_pointer++;
-//		}
 	}
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 }
 
-void setLedValue(uint8_t row, uint8_t col, uint8_t r, uint8_t g, uint8_t b) {
+// Just throw values into led_value array - the dma interrupt will
+// handle updating the dma buffer
+void setLedValue(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
 
-	led_value[row][col][R] = r;
-	led_value[row][col][G] = g;
-	led_value[row][col][B] = b;
+	led_value[col][row][R] = r;
+	led_value[col][row][G] = g;
+	led_value[col][row][B] = b;
 
-//// Green msb first
-//	buffer[48] = (g >> 7 && 1) * 33 + 34;
-//	buffer[49] = (g >> 6 && 1) * 33 + 34;
-//	buffer[50] = (g >> 5 && 1) * 33 + 34;
-//	buffer[51] = (g >> 4 && 1) * 33 + 34;
-//	buffer[52] = (g >> 3 && 1) * 33 + 34;
-//	buffer[53] = (g >> 2 && 1) * 33 + 34;
-//	buffer[54] = (g >> 1 && 1) * 33 + 34;
-//	buffer[55] = (g && 1) * 33 + 34;
-//	// Red msb first
-//	buffer[56] = (r >> 7 && 1) * 33 + 34;
-//	buffer[57] = (r >> 6 && 1) * 33 + 34;
-//	buffer[58] = (r >> 5 && 1) * 33 + 34;
-//	buffer[59] = (r >> 4 && 1) * 33 + 34;
-//	buffer[60] = (r >> 3 && 1) * 33 + 34;
-//	buffer[61] = (r >> 2 && 1) * 33 + 34;
-//	buffer[62] = (r >> 1 && 1) * 33 + 34;
-//	buffer[63] = (r && 1) * 33 + 34;
-//	// Blue msb first
-//	buffer[64] = (b >> 7 && 1) * 33 + 34;
-//	buffer[65] = (b >> 6 && 1) * 33 + 34;
-//	buffer[66] = (b >> 5 && 1) * 33 + 34;
-//	buffer[67] = (b >> 4 && 1) * 33 + 34;
-//	buffer[68] = (b >> 3 && 1) * 33 + 34;
-//	buffer[69] = (b >> 2 && 1) * 33 + 34;
-//	buffer[70] = (b >> 1 && 1) * 33 + 34;
-//	buffer[71] = (b && 1) * 33 + 34;
-//
-//	// Green msb first
-//	buffer[72] = 34;
-//	buffer[73] = 34;
-//	buffer[74] = 34;
-//	buffer[75] = 34;
-//	buffer[76] = 34;
-//	buffer[77] = 34;
-//	buffer[78] = 34;
-//	buffer[79] = 34;
-//	// Red msb first
-//	buffer[80] = 34;
-//	buffer[81] = 34;
-//	buffer[82] = 34;
-//	buffer[83] = 34;
-//	buffer[84] = 34;
-//	buffer[85] = 34;
-//	buffer[86] = 34;
-//	buffer[87] = 34;
-//	// Blue msb first
-//	buffer[88] = 34;
-//	buffer[89] = 34;
-//	buffer[90] = 34;
-//	buffer[91] = 34;
-//	buffer[92] = 34;
-//	buffer[93] = 34;
-//	buffer[94] = 34;
-//	buffer[95] = 34;
 }
 
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
-int main(void) {
-	/* USER CODE BEGIN 1 */
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+  /* USER CODE BEGIN 1 */
 
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_DMA_Init();
-	MX_TIM3_Init();
-	/* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_TIM3_Init();
+  /* USER CODE BEGIN 2 */
 
 	// Set buffer appropriately
 	//setLedValue(0, 0, 5);
-	setLedValue(0, 0, 0, 0, 0);
+	//setLedValue(0, 0, 0, 0, 0);
 
 	// Start the timer to get the PWM going
 	HAL_TIM_Base_Start(&htim3);
@@ -257,12 +222,14 @@ int main(void) {
 
 	printf("Firing up!\n");
 
-	/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
 
 	setLedValue(0, 0, 50, 0, 0);
+	setLedValue(1, 0, 0, 30, 0);
+	setLedValue(2, 0, 0, 0, 40);
 
 	uint32_t then = 0;
 
@@ -271,159 +238,168 @@ int main(void) {
 		uint32_t now = HAL_GetTick();
 		if (now % 1000 == 0 && now != then) {
 
-			printf("tick %5lu\n", now);
+			printf("tick %5lu (update count: %5lu)\n", now, update_count);
 
 			setLedValue(0, 0, 0, 0, 100);
 
 			then = now;
 		}
 
-		/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-		/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
-void SystemClock_Config(void) {
-	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-	/** Configure the main internal regulator output voltage
-	 */
-	__HAL_RCC_PWR_CLK_ENABLE();
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-	/** Initializes the RCC Oscillators according to the specified parameters
-	 * in the RCC_OscInitTypeDef structure.
-	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLM = 4;
-	RCC_OscInitStruct.PLL.PLLN = 168;
-	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-	RCC_OscInitStruct.PLL.PLLQ = 7;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-		Error_Handler();
-	}
-	/** Initializes the CPU, AHB and APB buses clocks
-	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
-		Error_Handler();
-	}
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
- * @brief TIM3 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_TIM3_Init(void) {
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
 
-	/* USER CODE BEGIN TIM3_Init 0 */
+  /* USER CODE BEGIN TIM3_Init 0 */
 
-	/* USER CODE END TIM3_Init 0 */
+  /* USER CODE END TIM3_Init 0 */
 
-	TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
-	TIM_MasterConfigTypeDef sMasterConfig = { 0 };
-	TIM_OC_InitTypeDef sConfigOC = { 0 };
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
-	/* USER CODE BEGIN TIM3_Init 1 */
+  /* USER CODE BEGIN TIM3_Init 1 */
 
-	/* USER CODE END TIM3_Init 1 */
-	htim3.Instance = TIM3;
-	htim3.Init.Prescaler = 99;
-	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim3.Init.Period = 104;
-	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-	if (HAL_TIM_Base_Init(&htim3) != HAL_OK) {
-		Error_Handler();
-	}
-	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-	if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK) {
-		Error_Handler();
-	}
-	if (HAL_TIM_PWM_Init(&htim3) != HAL_OK) {
-		Error_Handler();
-	}
-	sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig)
-			!= HAL_OK) {
-		Error_Handler();
-	}
-	sConfigOC.OCMode = TIM_OCMODE_PWM1;
-	sConfigOC.Pulse = 0;
-	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-	sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
-	if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1)
-			!= HAL_OK) {
-		Error_Handler();
-	}
-	/* USER CODE BEGIN TIM3_Init 2 */
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 104;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
 
-	/* USER CODE END TIM3_Init 2 */
-	HAL_TIM_MspPostInit(&htim3);
-
-}
-
-/**
- * Enable DMA controller clock
- */
-static void MX_DMA_Init(void) {
-
-	/* DMA controller clock enable */
-	__HAL_RCC_DMA1_CLK_ENABLE();
-
-	/* DMA interrupt init */
-	/* DMA1_Stream4_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
 
 }
 
 /**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
-static void MX_GPIO_Init(void) {
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
 
-	/* GPIO Ports Clock Enable */
-	__HAL_RCC_GPIOH_CLK_ENABLE();
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+  /* DMA interrupt init */
+  /* DMA1_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
 
-	/*Configure GPIO pin : PA4 */
-	GPIO_InitStruct.Pin = GPIO_PIN_4;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
 
-	/*Configure GPIO pin : PC7 */
-	GPIO_InitStruct.Pin = GPIO_PIN_7;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(IRQ_HANDLER_GPIO_Port, IRQ_HANDLER_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : IRQ_HANDLER_Pin */
+  GPIO_InitStruct.Pin = IRQ_HANDLER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(IRQ_HANDLER_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 }
 
@@ -432,14 +408,15 @@ static void MX_GPIO_Init(void) {
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
-void Error_Handler(void) {
-	/* USER CODE BEGIN Error_Handler_Debug */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 
-	/* USER CODE END Error_Handler_Debug */
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
