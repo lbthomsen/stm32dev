@@ -43,10 +43,10 @@
 #define LED_RES 0 // Reset state - all values should be 0 for 2 buffers
 #define LED_DAT 1 // Data state - values should be taken from led_values
 
-#define LED_ROWS 8
-#define LED_COLS 8
-#define R 0
-#define G 1
+#define LED_ROWS 1
+#define LED_COLS 1
+#define G 0
+#define R 1
 #define B 2
 
 /* USER CODE END PD */
@@ -147,7 +147,7 @@ void update_buffer_next() {
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 	if (htim->Instance == TIM3) {
-		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
+		dma_buffer_pointer = &dma_buffer[0];
 		update_buffer_next();
 	}
 	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
@@ -157,9 +157,10 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 	if (htim->Instance == TIM3) {
-		dma_buffer_pointer = &dma_buffer[0];
+		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
 		update_buffer_next();
 	}
+	HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_1);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 }
 
@@ -170,6 +171,9 @@ void setLedValue(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
 	led_value[col][row][R] = r;
 	led_value[col][row][G] = g;
 	led_value[col][row][B] = b;
+
+	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
+		BUFFER_SIZE * 2);
 
 }
 
@@ -212,15 +216,15 @@ int main(void)
 	//setLedValue(0, 0, 0, 0, 0);
 
 	// Start the timer to get the PWM going
-	HAL_TIM_Base_Start(&htim3);
+	//HAL_TIM_Base_Start(&htim3);
 
 	// Start DMA to feed the PWM with values
-	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
-	BUFFER_SIZE * 2);
+	//HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
+	//BUFFER_SIZE * 2);
 
-	HAL_Delay(100);
+	//HAL_Delay(100);
 
-	printf("Firing up!\n");
+	//printf("Firing up!\n");
 
   /* USER CODE END 2 */
 
@@ -228,8 +232,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
 	setLedValue(0, 0, 50, 0, 0);
-	setLedValue(1, 0, 0, 30, 0);
-	setLedValue(2, 0, 0, 0, 40);
+	//setLedValue(1, 0, 0, 30, 0);
+	//setLedValue(2, 0, 0, 0, 40);
 
 	uint32_t then = 0;
 
@@ -240,7 +244,7 @@ int main(void)
 
 			printf("tick %5lu (update count: %5lu)\n", now, update_count);
 
-			setLedValue(0, 0, 0, 0, 100);
+			setLedValue(0, 0, 0, 30, 0);
 
 			then = now;
 		}

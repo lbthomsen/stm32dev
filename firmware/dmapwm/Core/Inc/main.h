@@ -63,7 +63,7 @@ void Error_Handler(void);
 #define IRQ_HANDLER_Pin GPIO_PIN_4
 #define IRQ_HANDLER_GPIO_Port GPIOA
 #define RGB_LED_Pin GPIO_PIN_6
-#define RGB_LED_GPIO_Port GPIOA
+#define RGB_LED_GPIO_Port GPIOC
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
