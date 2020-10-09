@@ -9,16 +9,15 @@
  * <h2><center>&copy; Copyright (c) 2020 Lars Thomsen &lt;lbthomsen@gmail.com&gt;
  * All rights reserved.</center></h2>
  *
- * This software component is licensed by ST under MIT license,
- * the "License"; You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at:
- *                        opensource.org/licenses/MIT
+ * This software component is licensed by lbthomsen under DWYDWP (Do What You
+ * Damn Well Please) license.
  *
  ******************************************************************************
  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -58,6 +57,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 /* USER CODE BEGIN PV */
@@ -84,6 +84,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -104,22 +105,30 @@ int _write(int file, char *ptr, int len) {
  * At the moment this one is in dire need of optimization!
  *
  */
-void update_buffer_next() {
+static inline void update_buffer_next() {
 
-	if (led_state == LED_RES) { // Reset Cycle - two full buffers of zeros
-		for (uint8_t i = 0; i < BUFFER_SIZE; i++) {
+	// A simple state machine - we're either resetting (two buffers worth of zeros) or
+	// we are transmitting data
+
+	if (led_state == LED_RES) { // Reset state - two full buffers of zeros
+
+		for (uint8_t i = 0; i < BUFFER_SIZE; i++) { // Fill buffer with zeros
 			*(uint16_t*) dma_buffer_pointer = (uint16_t) 0;
 			dma_buffer_pointer++;
 		}
+
 		res_cnt++;
+
 		if (res_cnt == 2) { // done enough reset cycles
 			led_col = 0;	// prepare to send data
 			led_row = 0;
 			led_state = LED_DAT;
 		}
-	} else { // LED cycle
+
+	} else { // LED state
+
 		// First let's deal with the current LED
-		for (uint8_t c = 0; c < 3; c++) {
+		for (uint8_t c = 0; c < 3; c++) { // This is the bitch - need to be optimized!
 			// Now deal with each bit
 			for (uint8_t b = 0; b < 8; b++) {
 				*(uint16_t*) dma_buffer_pointer =
@@ -128,6 +137,7 @@ void update_buffer_next() {
 				dma_buffer_pointer++;
 			}
 		}
+
 		// Now move to next LED
 		led_col++; // Next column
 		if (led_col >= LED_COLS) { // reached top
@@ -139,13 +149,21 @@ void update_buffer_next() {
 				led_state = LED_RES;
 			}
 		}
+
 	}
 
 }
 
+// Handle built-in blue led hanging off of C13
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+        if (htim->Instance == TIM4) {
+        	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+        }
+}
+
 // Done sending first half of the DMA buffer - this can now safely be updated
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
-	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 	if (htim->Instance == TIM3) {
 		dma_buffer_pointer = &dma_buffer[0];
 		update_buffer_next();
@@ -155,13 +173,12 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 
 // Done sending the second half of the DMA buffer - this can now be safely updated
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 	if (htim->Instance == TIM3) {
 		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
 		update_buffer_next();
 	}
-	HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 }
 
 // Just throw values into led_value array - the dma interrupt will
@@ -171,9 +188,6 @@ void setLedValue(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
 	led_value[col][row][R] = r;
 	led_value[col][row][G] = g;
 	led_value[col][row][B] = b;
-
-	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
-		BUFFER_SIZE * 2);
 
 }
 
@@ -209,29 +223,31 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM3_Init();
+  MX_USB_DEVICE_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
 	// Set buffer appropriately
 	//setLedValue(0, 0, 5);
-	//setLedValue(0, 0, 0, 0, 0);
+	setLedValue(0, 0, 0, 0, 10);
 
-	// Start the timer to get the PWM going
-	//HAL_TIM_Base_Start(&htim3);
+	// Start the timer to get the blue led flashing every second
+	HAL_TIM_Base_Start_IT(&htim4);
 
 	// Start DMA to feed the PWM with values
-	//HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
-	//BUFFER_SIZE * 2);
+	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
+	BUFFER_SIZE * 2);
 
-	//HAL_Delay(100);
+	HAL_Delay(100);
 
-	//printf("Firing up!\n");
+	printf("Firing up!\n");
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	setLedValue(0, 0, 50, 0, 0);
+	setLedValue(0, 0, 100, 0, 100);
 	//setLedValue(1, 0, 0, 30, 0);
 	//setLedValue(2, 0, 0, 0, 40);
 
@@ -244,7 +260,7 @@ int main(void)
 
 			printf("tick %5lu (update count: %5lu)\n", now, update_count);
 
-			setLedValue(0, 0, 0, 30, 0);
+			//setLedValue(0, 0, 0, 30, 0);
 
 			then = now;
 		}
@@ -359,6 +375,51 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 7199;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 4999;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -384,13 +445,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(IRQ_HANDLER_GPIO_Port, IRQ_HANDLER_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : IRQ_HANDLER_Pin */
   GPIO_InitStruct.Pin = IRQ_HANDLER_Pin;
