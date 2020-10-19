@@ -169,17 +169,17 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 		dma_buffer_pointer = &dma_buffer[0];
 		update_buffer_next();
 	}
-	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 }
 
 // Done sending the second half of the DMA buffer - this can now be safely updated
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 	if (htim->Instance == TIM3) {
 		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
 		update_buffer_next();
 	}
-	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 }
 
 // Just throw values into led_value array - the dma interrupt will
@@ -230,7 +230,7 @@ int main(void)
 
 	// Set buffer appropriately
 	//setLedValue(0, 0, 5);
-	setLedValue(0, 0, 0, 0, 10);
+	setLedValue(0, 0, 0, 10, 0);
 
 	// Start the timer to get the blue led flashing every second
 	HAL_TIM_Base_Start_IT(&htim4);
