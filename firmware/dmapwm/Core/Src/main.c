@@ -17,7 +17,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -121,7 +120,7 @@ static inline void update_buffer_next() {
 
 		res_cnt++;
 
-		if (res_cnt == 2) { // done enough reset cycles
+		if (res_cnt == 4) { // done enough reset cycles
 			led_col = 0;	// prepare to send data
 			led_row = 0;
 			led_state = LED_DAT;
@@ -225,7 +224,6 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM3_Init();
-  MX_USB_DEVICE_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
@@ -249,7 +247,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	setLedValue(0, 0, 0, 0, 100);
+	setLedValue(0, 0, 0, 20, 0);
 	//setLedValue(1, 0, 0, 30, 0);
 	//setLedValue(2, 0, 0, 0, 40);
 
