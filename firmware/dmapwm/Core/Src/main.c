@@ -32,9 +32,10 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+// Buffer allocated will be twice this
 #define BUFFER_SIZE 24
 
-// LED on/off counts
+// LED on/off counts.  PWM timer is running 105 counts.
 #define LED_OFF 32
 #define LED_DIFF 36
 
