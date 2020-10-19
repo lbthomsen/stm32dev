@@ -35,9 +35,10 @@
 // Buffer allocated will be twice this
 #define BUFFER_SIZE 24
 
-// LED on/off counts.  PWM timer is running 105 counts.
-#define LED_OFF 32
-#define LED_DIFF 36
+// LED on/off counts.  PWM timer is running 40 counts.
+#define LED_PERIOD 39
+#define LED_OFF (LED_PERIOD/3)
+#define LED_ON ((LED_PERIOD * 2) / 3)
 
 // Define LED driver state machine states
 #define LED_RES 0 // Reset state - all values should be 0 for 2 buffers
@@ -129,12 +130,12 @@ static inline void update_buffer_next() {
 	} else { // LED state
 
 		// First let's deal with the current LED
+		uint8_t *led = led_value[led_col][led_row];
 		for (uint8_t c = 0; c < 3; c++) { // This is the bitch - need to be optimized!
+		    uint8_t value = led[c];
 			// Now deal with each bit
 			for (uint8_t b = 0; b < 8; b++) {
-				*(uint16_t*) dma_buffer_pointer =
-						(uint16_t) (led_value[led_col][led_row][c] >> (7 - b)
-								&& 1) * LED_DIFF + LED_OFF;
+				*(uint16_t*) dma_buffer_pointer = value >> (7 - b) != 0 ? LED_ON : LED_OFF;
 				dma_buffer_pointer++;
 			}
 		}
@@ -338,7 +339,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 104;
+  htim3.Init.Period = LED_PERIOD;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
