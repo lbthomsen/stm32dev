@@ -60,6 +60,7 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LED_PERIOD 104
 #define IRQ_HANDLER_Pin GPIO_PIN_4
 #define IRQ_HANDLER_GPIO_Port GPIOA
 #define RGB_LED_Pin GPIO_PIN_6

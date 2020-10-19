@@ -36,7 +36,7 @@
 #define BUFFER_SIZE 24
 
 // LED on/off counts.  PWM timer is running 40 counts.
-#define LED_PERIOD 39
+//#define LED_PERIOD 104
 #define LED_OFF (LED_PERIOD/3)
 #define LED_ON ((LED_PERIOD * 2) / 3)
 
@@ -249,7 +249,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	setLedValue(0, 0, 100, 0, 100);
+	setLedValue(0, 0, 0, 0, 100);
 	//setLedValue(1, 0, 0, 30, 0);
 	//setLedValue(2, 0, 0, 0, 40);
 
@@ -262,7 +262,7 @@ int main(void)
 
 			printf("tick %5lu (update count: %5lu)\n", now, update_count);
 
-			setLedValue(0, 0, 0, 30, 0);
+			setLedValue(0, 0, 0, 0, 20);
 
 			then = now;
 		}
@@ -395,7 +395,7 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 7199;
+  htim4.Init.Prescaler = 8399;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim4.Init.Period = 4999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
