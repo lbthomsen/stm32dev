@@ -230,7 +230,7 @@ int main(void)
 
 	// Set buffer appropriately
 	//setLedValue(0, 0, 5);
-	setLedValue(0, 0, 0, 10, 0);
+	setLedValue(0, 0, 10, 0, 0);
 
 	// Start the timer to get the blue led flashing every second
 	HAL_TIM_Base_Start_IT(&htim4);
@@ -261,7 +261,7 @@ int main(void)
 
 			printf("tick %5lu (update count: %5lu)\n", now, update_count);
 
-			//setLedValue(0, 0, 0, 30, 0);
+			setLedValue(0, 0, 0, 30, 0);
 
 			then = now;
 		}
