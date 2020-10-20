@@ -36,9 +36,9 @@
 
 // LED on/off counts.  PWM timer is running 104 counts.
 #define LED_PERIOD 104
-#define LED_OFF ((LED_PERIOD/3) - 2)
-#define LED_ON (((LED_PERIOD * 2) / 3) + 2)
-#define LED_RESET_CYCLES 16 // Found experimentally and way longer than specified in datasheet
+#define LED_OFF LED_PERIOD / 4
+#define LED_ON (LED_PERIOD / 4) * 3
+#define LED_RESET_CYCLES 10 // Found experimentally and way longer than specified in datasheet
 
 // Define LED driver state machine states
 #define LED_RES 0 // Reset state - all values should be 0 for 2 buffers
@@ -113,7 +113,7 @@ static inline void update_buffer_next() {
 	// A simple state machine - we're either resetting (two buffers worth of zeros) or
 	// we are transmitting data
 
-	if (led_state == LED_RES) { // Reset state - two full buffers of zeros
+	if (led_state == LED_RES) { // Reset state - 10 or more full buffers of zeros
 
 		for (uint8_t i = 0; i < BUFFER_SIZE; i++) { // Fill buffer with zeros
 			*(uint16_t*) dma_buffer_pointer = (uint16_t) 0;
@@ -276,7 +276,7 @@ int main(void) {
 				setLedValue(0, 0, 0, 10, 10);
 				break;
 			case 6:
-				setLedValue(0, 0, 255, 255, 255);
+				setLedValue(0, 0, 10, 10, 10);
 				break;
 			}
 

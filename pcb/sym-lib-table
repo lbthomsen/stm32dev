@@ -1,2 +1,3 @@
 (sym_lib_table
+  (lib (name stm32dev-rescue)(type Legacy)(uri ${KIPRJMOD}/stm32dev-rescue.lib)(options "")(descr ""))
 )
