@@ -35,9 +35,10 @@
 #define BUFFER_SIZE 24
 
 // LED on/off counts.  PWM timer is running 40 counts.
-//#define LED_PERIOD 104
-#define LED_OFF (LED_PERIOD/3)
-#define LED_ON ((LED_PERIOD * 2) / 3)
+#define LED_PERIOD 104
+#define LED_OFF ((LED_PERIOD/3) - 2)
+#define LED_ON (((LED_PERIOD * 2) / 3) + 2)
+#define LED_RESET_CYCLES 16
 
 // Define LED driver state machine states
 #define LED_RES 0 // Reset state - all values should be 0 for 2 buffers
@@ -120,7 +121,7 @@ static inline void update_buffer_next() {
 
 		res_cnt++;
 
-		if (res_cnt == 4) { // done enough reset cycles
+		if (res_cnt >= LED_RESET_CYCLES) { // done enough reset cycles
 			led_col = 0;	// prepare to send data
 			led_row = 0;
 			led_state = LED_DAT;
@@ -229,7 +230,7 @@ int main(void)
 
 	// Set buffer appropriately
 	//setLedValue(0, 0, 5);
-	setLedValue(0, 0, 10, 0, 0);
+	//setLedValue(0, 0, 10, 0, 0);
 
 	// Start the timer to get the blue led flashing every second
 	HAL_TIM_Base_Start_IT(&htim4);
@@ -247,9 +248,11 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	setLedValue(0, 0, 0, 20, 0);
+	//setLedValue(0, 0, 0, 20, 0);
 	//setLedValue(1, 0, 0, 30, 0);
 	//setLedValue(2, 0, 0, 0, 40);
+
+	uint8_t led_value_counter = 0;
 
 	uint32_t then = 0;
 
@@ -260,7 +263,19 @@ int main(void)
 
 			printf("tick %5lu (update count: %5lu)\n", now, update_count);
 
-			setLedValue(0, 0, 0, 0, 20);
+			switch(led_value_counter) {
+			case 0:
+				setLedValue(0, 0, 10, 0, 0);
+				break;
+			case 1:
+				setLedValue(0, 0, 0, 10, 0);
+				break;
+			case 2:
+				setLedValue(0, 0, 0, 0, 10);
+			}
+
+			led_value_counter++;
+			if (led_value_counter >= 3) led_value_counter = 0;
 
 			then = now;
 		}
