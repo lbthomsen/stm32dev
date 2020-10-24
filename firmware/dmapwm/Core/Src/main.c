@@ -36,8 +36,8 @@
 
 // LED on/off counts.  PWM timer is running 104 counts.
 #define LED_PERIOD 104
-#define LED_OFF (LED_PERIOD + 1) / 4
-#define LED_ON (LED_PERIOD + 1) / 2
+#define LED_OFF 33
+#define LED_ON 71
 #define LED_RESET_CYCLES 10 // Found experimentally and way longer than specified in datasheet
 
 // Define LED driver state machine states

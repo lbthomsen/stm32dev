@@ -62,6 +62,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define T3_CNT 104
 #define T3_PRE 0
+#define T4_PRE 8399
+#define T4_CNT 99
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

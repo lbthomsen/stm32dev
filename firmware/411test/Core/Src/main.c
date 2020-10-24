@@ -43,8 +43,8 @@
 
 // LED on/off counts.  PWM timer is running 104 counts.
 #define LED_PERIOD T3_CNT + 1
-#define LED_OFF 40
-#define LED_ON 85
+#define LED_OFF 41
+#define LED_ON 80
 #define LED_RESET_CYCLES 10 // Found experimentally and way longer than specified in datasheet
 
 // Define LED driver state machine states
@@ -248,7 +248,7 @@ int main(void) {
 	while (1) {
 
 		uint32_t now = HAL_GetTick(); // Get current tick - one per ms
-		if (now % 1000 == 0 && now != then) {
+		if (now % 30 == 0 && now != then) {
 
 			// We'll get here once per second
 			for (uint8_t row = 0; row < LED_ROWS; row++) {

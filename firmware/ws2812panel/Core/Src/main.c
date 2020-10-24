@@ -22,6 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <math.h>
+#include <arm_math.h>
 
 /* USER CODE END Includes */
 
@@ -36,14 +38,19 @@
 // Configure the timer 3 values
 #define T3_PRE 0   // Timer preload
 #define T3_CNT 104 // Timer 3 counter
+#define T4_PRE 8399
+#define T4_CNT 99
+
+#define M_PI2 2 * M_PI
+#define SAMPLE_FREQ 100
 
 // Buffer allocated will be twice this
 #define BUFFER_SIZE 24
 
 // LED on/off counts.  PWM timer is running 104 counts.
-#define LED_PERIOD T3_CNT + 1
-#define LED_OFF LED_PERIOD / 4
-#define LED_ON 2 * LED_PERIOD / 3
+//#define LED_PERIOD T3_CNT + 1
+#define LED_OFF 33
+#define LED_ON 71
 #define LED_RESET_CYCLES 10
 
 // Define LED driver state machine states
@@ -65,6 +72,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 /* USER CODE BEGIN PV */
@@ -74,6 +82,11 @@ uint16_t dma_buffer[BUFFER_SIZE * 2] = { 0 };
 
 // Pointer to above buffer.  This will be set to the start of the half way point
 uint16_t *dma_buffer_pointer;
+
+// Base for calculating RGB values
+float led_angle[LED_ROWS][LED_COLS][3] = { 0 };
+float led_velocity[LED_ROWS][LED_COLS][3] = { 0 };
+uint8_t led_amplitude[LED_ROWS][LED_COLS][3] = { 0 };
 
 // LED RGB values
 uint8_t led_value[LED_ROWS][LED_COLS][3] = { 0 };
@@ -92,6 +105,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -106,7 +120,7 @@ static void MX_TIM3_Init(void);
  * At the moment this one is in dire need of optimization!
  *
  */
-static inline void update_buffer_next() {
+static inline void update_next_buffer() {
 
 	// For debugging and measuring calculation time - toggle GPIO pin
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
@@ -149,7 +163,7 @@ static inline void update_buffer_next() {
 			led_col = 0; // back to first
 			led_row++; // and move on to next row
 			if (led_row >= LED_ROWS) { // reached end
-				update_count++;
+
 				res_cnt = 0;
 				led_state = LED_RES;
 			}
@@ -163,9 +177,33 @@ static inline void update_buffer_next() {
 
 // Handle built-in blue led hanging off of C13
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+
 	if (htim->Instance == TIM4) {
-		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+
+		//
+		for (uint8_t col = 0; col < LED_COLS; col++) {
+
+			for (uint8_t row = 0; row < LED_ROWS; row++) {
+
+				for (uint8_t led = 0; led < 2; ++led) {
+
+					led_value[row][col][led] = (uint8_t)(led_amplitude[row][col][led] - arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]);
+
+					led_angle[row][col][led] += led_velocity[row][col][led];
+					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2;
+
+				}
+
+			}
+
+		}
+
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+
 	}
+
 }
 
 // Done sending first half of the DMA buffer - this can now safely be updated
@@ -173,7 +211,7 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 
 	if (htim->Instance == TIM3) {
 		dma_buffer_pointer = &dma_buffer[0];
-		update_buffer_next();
+		update_next_buffer();
 	}
 
 }
@@ -183,7 +221,7 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 
 	if (htim->Instance == TIM3) {
 		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
-		update_buffer_next();
+		update_next_buffer();
 	}
 
 }
@@ -195,6 +233,30 @@ void setLedValue(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
 	led_value[col][row][R] = r;
 	led_value[col][row][G] = g;
 	led_value[col][row][B] = b;
+
+}
+
+void setLedAngle(uint8_t col, uint8_t row, float r, float g, float b) {
+
+	led_angle[col][row][R] = r;
+	led_angle[col][row][G] = g;
+	led_angle[col][row][B] = b;
+
+}
+
+void setLedFreq(uint8_t col, uint8_t row, float r, float g, float b) {
+
+	led_velocity[col][row][R] = M_PI2 / (SAMPLE_FREQ / r);
+	led_velocity[col][row][G] = M_PI2 / (SAMPLE_FREQ / g);
+	led_velocity[col][row][B] = M_PI2 / (SAMPLE_FREQ / b);
+
+}
+
+void setLedAmplitude(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
+
+	led_amplitude[col][row][R] = r;
+	led_amplitude[col][row][G] = g;
+	led_amplitude[col][row][B] = b;
 
 }
 
@@ -230,10 +292,13 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
+	HAL_TIM_Base_Start_IT(&htim4);
+
 	// Start DMA to feed the PWM with values
-    // At this point the buffer should be empty - all zeros
+	// At this point the buffer should be empty - all zeros
 	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
 	BUFFER_SIZE * 2);
 
@@ -242,42 +307,17 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	uint8_t led_value_counter = 0;
-
 	uint32_t then = 0;
+
+	setLedAmplitude(0, 0, 127, 50, 50);
+	setLedFreq(0, 0, 0.1, 0, 0);
 
 	while (1) {
 
 		uint32_t now = HAL_GetTick();
 		if (now % 1000 == 0 && now != then) {
 
-			switch (led_value_counter) {
-			case 0:
-				setLedValue(0, 0, 10, 0, 0);
-				break;
-			case 1:
-				setLedValue(0, 0, 0, 10, 0);
-				break;
-			case 2:
-				setLedValue(0, 0, 0, 0, 10);
-				break;
-			case 3:
-				setLedValue(0, 0, 10, 10, 0);
-				break;
-			case 4:
-				setLedValue(0, 0, 10, 0, 10);
-				break;
-			case 5:
-				setLedValue(0, 0, 0, 10, 10);
-				break;
-			case 6:
-				setLedValue(0, 0, 10, 10, 10);
-				break;
-			}
-
-			led_value_counter++;
-			if (led_value_counter >= 7)
-				led_value_counter = 0;
+			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 
 			then = now;
 		}
@@ -392,6 +432,51 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = T4_PRE;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = T4_CNT;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -417,16 +502,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : PC0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PC13 PC0 PC1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
