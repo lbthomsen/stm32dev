@@ -591,6 +591,23 @@ int main(void)
 	setLedAmplitude(7, 7, 127, 50, 50);
 	setLedFreq(7, 7, 0.2, 0, 0);
 
+	// Center 4 leds
+	setLedAmplitude(3, 3, 50, 50, 50);
+	setLedAngle(3, 3, 0, 0, M_PI);
+	setLedFreq(3, 3, 1, 0, 1);
+
+	setLedAmplitude(4, 3, 50, 50, 50);
+	setLedAngle(4, 3, M_PI, 0, 0);
+	setLedFreq(4, 3, 1, 0, 1);
+
+	setLedAmplitude(3, 4, 50, 50, 50);
+	setLedAngle(3, 4, M_PI, 0, 0);
+	setLedFreq(3, 4, 1, 0, 1);
+
+	setLedAmplitude(4, 4, 50, 50, 50);
+	setLedAngle(4, 4, 0, 0, M_PI);
+	setLedFreq(4, 4, 1, 0, 1);
+
 	while (1) {
 
 		uint32_t now = HAL_GetTick();
