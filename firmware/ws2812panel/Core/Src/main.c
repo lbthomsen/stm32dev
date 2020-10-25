@@ -36,13 +36,13 @@
 /* USER CODE BEGIN PD */
 
 // Configure the timer 3 values
-#define T3_PRE 0   // Timer preload
-#define T3_CNT 104 // Timer 3 counter
-#define T4_PRE 8399
-#define T4_CNT 99
+#define T3_PRE 0    // Timer 3 preload
+#define T3_CNT 104  // Timer 3 counter - 104 result in 800 kHz PWM
+#define T4_PRE 8399 // Timer 4 preload
+#define T4_CNT 99   // Timer 4 counter - result in 100 interrupts per second
 
-#define M_PI2 2 * M_PI
-#define SAMPLE_FREQ 100
+#define M_PI2 2 * M_PI   // Full circle
+#define SAMPLE_FREQ 100  // Frequency of Timer 4
 
 // Buffer allocated will be twice this
 #define BUFFER_SIZE 24
@@ -77,7 +77,7 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 /* USER CODE BEGIN PV */
 
-const uint16_t zeros[8] = {0};
+const uint16_t zeros[24] = {0}; // Used to trigger latching
 
 // Look up table for led color bit patterns.  "Waste" 4k of flash but is a
 // lot faster (not measured accurately but I'd say about double).
@@ -393,10 +393,11 @@ static inline void update_next_buffer() {
 
 	if (led_state == LED_RES) { // Reset state - 10 or more full buffers of zeros
 
-		for (uint8_t i = 0; i < BUFFER_SIZE; i++) { // Fill buffer with zeros
-			*(uint16_t*) dma_buffer_pointer = (uint16_t) 0;
-			dma_buffer_pointer++;
-		}
+		memcpy(dma_buffer_pointer, zeros, 48);
+//		for (uint8_t i = 0; i < BUFFER_SIZE; i++) { // Fill buffer with zeros
+//			*(uint16_t*) dma_buffer_pointer = (uint16_t) 0;
+//			dma_buffer_pointer++;
+//		}
 
 		res_cnt++;
 
@@ -588,13 +589,15 @@ int main(void)
 	setLedFreq(0, 2, 1, 0, 1);
 
 	setLedAmplitude(7, 7, 127, 50, 50);
-	setLedFreq(7, 7, 0.02, 0, 0);
+	setLedFreq(7, 7, 0.2, 0, 0);
 
 	while (1) {
 
 		uint32_t now = HAL_GetTick();
-		if (now % 1000 == 0 && now != then) {
+		if (now % 500 == 0 && now != then) {
 
+			// Not really doing anything as everything is driven by timers,
+			// but let's toggle a GPIO pin just for the hell of it.
 			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 
 			then = now;
