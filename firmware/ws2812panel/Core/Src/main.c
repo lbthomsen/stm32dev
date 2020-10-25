@@ -79,6 +79,8 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 const uint16_t zeros[8] = {0};
 
+// Look up table for led color bit patterns.  "Waste" 4k of flash but is a
+// lot faster (not measured accurately but I'd say about double).
 const uint16_t color_value[256][8] = {
 		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
 		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
@@ -409,13 +411,19 @@ static inline void update_next_buffer() {
 		// First let's deal with the current LED
 		uint8_t *led = led_value[led_col][led_row];
 		for (uint8_t c = 0; c < 3; c++) { // This is the bitch - need to be optimized!
-			uint8_t value = led[c];
-			// Now deal with each bit
-			for (uint8_t b = 0; b < 8; b++) {
-				*(uint16_t*) dma_buffer_pointer =
-						value >> (7 - b) != 0 ? LED_ON : LED_OFF;
-				dma_buffer_pointer++;
-			}
+
+			// Optimization attempt
+			memcpy(dma_buffer_pointer, color_value[led[c]], 16);
+			dma_buffer_pointer += 8;
+
+			// Old version
+//			uint8_t value = led[c];
+//			// Now deal with each bit
+//			for (uint8_t b = 0; b < 8; b++) {
+//				*(uint16_t*) dma_buffer_pointer =
+//						value >> (7 - b) != 0 ? LED_ON : LED_OFF;
+//				dma_buffer_pointer++;
+//			}
 		}
 
 		// Now move to next LED switching to reset state when all leds have been updated
@@ -448,7 +456,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			for (uint8_t row = 0; row < LED_ROWS; row++) {
 
-				for (uint8_t led = 0; led < 2; ++led) {
+				for (uint8_t led = 0; led < 3; ++led) {
 
 					led_value[row][col][led] = (uint8_t)(led_amplitude[row][col][led] - arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]);
 
@@ -570,8 +578,17 @@ int main(void)
 
 	uint32_t then = 0;
 
-	setLedAmplitude(0, 0, 127, 50, 50);
-	setLedFreq(0, 0, 0.1, 0, 0);
+	setLedAmplitude(0, 0, 50, 50, 50);
+	setLedFreq(0, 0, 0.5, 0, 0);
+
+	setLedAmplitude(0, 1, 50, 50, 50);
+	setLedFreq(0, 1, 0, 1, 0);
+
+	setLedAmplitude(0, 2, 50, 50, 50);
+	setLedFreq(0, 2, 1, 0, 1);
+
+	setLedAmplitude(7, 7, 127, 50, 50);
+	setLedFreq(7, 7, 0.02, 0, 0);
 
 	while (1) {
 
