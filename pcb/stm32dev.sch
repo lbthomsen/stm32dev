@@ -912,7 +912,7 @@ F 4 "C25905" H 3200 6200 50  0001 C CNN "LCSC"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Connector:USB_C_Receptacle_USB2.0 J1
+L stm32dev-rescue:USB_C_Receptacle_USB2.0-Connector J1
 U 1 1 5F19076D
 P 1100 6250
 F 0 "J1" H 1207 7117 50  0000 C CNN
