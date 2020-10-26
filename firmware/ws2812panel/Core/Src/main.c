@@ -77,6 +77,7 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 /* USER CODE BEGIN PV */
 
+// Bunch of zeros used to latch the ws2812
 const uint16_t zeros[24] = {0}; // Used to trigger latching
 
 // Look up table for led color bit patterns.  "Waste" 4k of flash but is a
@@ -380,8 +381,6 @@ static void MX_TIM4_Init(void);
  * Update next 24 bits in the dma buffer - assume dma_buffer_pointer is pointing
  * to the buffer that is safe to update.
  *
- * At the moment this one is in dire need of optimization!
- *
  */
 static inline void update_next_buffer() {
 
@@ -393,7 +392,11 @@ static inline void update_next_buffer() {
 
 	if (led_state == LED_RES) { // Reset state - 10 or more full buffers of zeros
 
+		// This one is simple - we got a bunch of zeros of the right size - just throw
+		// that into the buffer
 		memcpy(dma_buffer_pointer, zeros, 48);
+
+//      Old version without the pre-filled buffer
 //		for (uint8_t i = 0; i < BUFFER_SIZE; i++) { // Fill buffer with zeros
 //			*(uint16_t*) dma_buffer_pointer = (uint16_t) 0;
 //			dma_buffer_pointer++;
@@ -413,7 +416,7 @@ static inline void update_next_buffer() {
 		uint8_t *led = led_value[led_col][led_row];
 		for (uint8_t c = 0; c < 3; c++) { // This is the bitch - need to be optimized!
 
-			// Optimization attempt
+			// Copy values from the pre-filled color_value buffer
 			memcpy(dma_buffer_pointer, color_value[led[c]], 16);
 			dma_buffer_pointer += 8;
 
