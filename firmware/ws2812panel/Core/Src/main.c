@@ -590,11 +590,11 @@ int main(void)
 
 		setLedAmplitude(i, 0, 50, 50, 50);
 		setLedAngle(i, 0, 0, 0, i * M_PI2 / 28);
-		setLedFreq(i, 0, 0, 0, 1);
+		setLedFreq(i, 0, 0, 0, -1);
 
 		setLedAmplitude(7 - i, 7, 50, 50, 50);
 		setLedAngle(7 - i, 7, 0, 0, (14 + i) * M_PI2 / 28);
-		setLedFreq(7 - i, 7, 0, 0, 1);
+		setLedFreq(7 - i, 7, 0, 0, -1);
 
 	}
 
@@ -602,11 +602,11 @@ int main(void)
 
 		setLedAmplitude(7, i, 50, 50, 50);
 		setLedAngle(7, i, 0, 0, (8 + i) * M_PI2 / 28);
-		setLedFreq(7, i, 0, 0, 1);
+		setLedFreq(7, i, 0, 0, -1);
 
 		setLedAmplitude(0, 7 - i, 50, 50, 50);
 		setLedAngle(0, 7 - i, 0, 0, (22 + i) * M_PI2 / 28);
-		setLedFreq(0, 7 - i, 0, 0, 1);
+		setLedFreq(0, 7 - i, 0, 0, -1);
 
 	}
 
