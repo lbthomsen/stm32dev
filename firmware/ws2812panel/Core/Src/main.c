@@ -585,95 +585,99 @@ int main(void)
 
 	// Outer ring
 
-	for (int i = 0; i < 8; i++) {
+//
+//	for (int i = 0; i < 8; i++) {
+//
+//		setLedAmplitude(i, 0, 50, 50, 50);
+//		setLedAngle(i, 0, 0, 0, i * M_PI2 / 28);
+//		setLedFreq(i, 0, 0, 0, 1);
+//
+//		setLedAmplitude(7 - i, 7, 50, 50, 50);
+//		setLedAngle(7 - i, 7, 0, 0, (14 + i) * M_PI2 / 28);
+//		setLedFreq(7 - i, 7, 0, 0, 1);
+//
+//	}
+//
+//	for (int i = 1; i < 7; i++) {
+//
+//		setLedAmplitude(7, i, 50, 50, 50);
+//		setLedAngle(7, i, 0, 0, (8 + i) * M_PI2 / 28);
+//		setLedFreq(7, i, 0, 0, 1);
+//
+//		setLedAmplitude(0, 7 - i, 50, 50, 50);
+//		setLedAngle(0, 7 - i, 0, 0, (22 + i) * M_PI2 / 28);
+//		setLedFreq(0, 7 - i, 0, 0, 1);
+//
+//	}
+//
+//	// Second ring
+//
+//	for (int i = 1; i < 7; i++) {
+//
+//		setLedAmplitude(i, 1, 50, 50, 50);
+//		setLedAngle(i, 1, 0, 0, (i - 1) * M_PI2 / 20);
+//		setLedFreq(i, 1, 0, 0, 1);
+//
+//		setLedAmplitude(7 - i, 6, 50, 50, 50);
+//		setLedAngle(7 - i, 6, 0, 0, (10 + i) * M_PI2 / 20);
+//		setLedFreq(7 - i, 6, 0, 0, 1);
+//
+//	}
+//
+//	for (int i = 2; i < 6; i++) {
+//
+//		setLedAmplitude(6, i, 50, 50, 50);
+//		setLedAngle(6, i, 0, 0, (5 + i) * M_PI2 / 20);
+//		setLedFreq(6, i, 0, 0, 1);
+//
+//		setLedAmplitude(1, 7 - i, 50, 50, 50);
+//		setLedAngle(1, 7 - i, 0, 0, (14 + i) * M_PI2 / 20);
+//		setLedFreq(1, 7 - i, 0, 0, 1);
+//
+//	}
+//
+//	// Third ring
+//
+//	for (int i = 2; i < 6; i++) {
+//
+//		setLedAmplitude(i, 2, 50, 50, 50);
+//		setLedAngle(i, 2, 0, 0, (i - 2) * M_PI2 / 12);
+//		setLedFreq(i, 2, 0, 0, 1);
+//
+//		setLedAmplitude(7 - i, 5, 50, 50, 50);
+//		setLedAngle(7 - i, 5, 0, 0, (4 + i) * M_PI2 / 12);
+//		setLedFreq(7 - i, 5, 0, 0, 1);
+//
+//	}
+//
+//	for (int i = 3; i < 5; i++) {
+//
+//		setLedAmplitude(5, i, 50, 50, 50);
+//		setLedAngle(5, i, 0, 0, (1 + i) * M_PI2 / 12);
+//		setLedFreq(5, i, 0, 0, 1);
+//
+//		setLedAmplitude(2, 7 - i, 50, 50, 50);
+//		setLedAngle(2, 7 - i, 0, 0, (7 + i) * M_PI2 / 12);
+//		setLedFreq(2, 7 - i, 0, 0, 1);
+//
+//	}
+//
+//	// Inner four
+//
+//	for (int i = 3; i < 5; i++) {
+//
+//		setLedAmplitude(i, 3, 50, 50, 50);
+//		setLedAngle(i, 3, 0, 0, (i - 3) * M_PI2 / 4);
+//		setLedFreq(i, 3, 0, 0, 1);
+//
+//		setLedAmplitude(7 - i, 4, 50, 50, 50);
+//		setLedAngle(7 - i, 4, 0, 0, (-1 + i) * M_PI2 / 4);
+//		setLedFreq(7 - i, 4, 0, 0, 1);
+//
+//	}
 
-		setLedAmplitude(i, 0, 50, 50, 50);
-		setLedAngle(i, 0, 0, 0, i * M_PI2 / 28);
-		setLedFreq(i, 0, 0, 0, 1);
-
-		setLedAmplitude(7 - i, 7, 50, 50, 50);
-		setLedAngle(7 - i, 7, 0, 0, (14 + i) * M_PI2 / 28);
-		setLedFreq(7 - i, 7, 0, 0, 1);
-
-	}
-
-	for (int i = 1; i < 7; i++) {
-
-		setLedAmplitude(7, i, 50, 50, 50);
-		setLedAngle(7, i, 0, 0, (8 + i) * M_PI2 / 28);
-		setLedFreq(7, i, 0, 0, 1);
-
-		setLedAmplitude(0, 7 - i, 50, 50, 50);
-		setLedAngle(0, 7 - i, 0, 0, (22 + i) * M_PI2 / 28);
-		setLedFreq(0, 7 - i, 0, 0, 1);
-
-	}
-
-	// Second ring
-
-	for (int i = 1; i < 7; i++) {
-
-		setLedAmplitude(i, 1, 50, 50, 50);
-		setLedAngle(i, 1, 0, 0, (i - 1) * M_PI2 / 20);
-		setLedFreq(i, 1, 0, 0, 1);
-
-		setLedAmplitude(7 - i, 6, 50, 50, 50);
-		setLedAngle(7 - i, 6, 0, 0, (10 + i) * M_PI2 / 20);
-		setLedFreq(7 - i, 6, 0, 0, 1);
-
-	}
-
-	for (int i = 2; i < 6; i++) {
-
-		setLedAmplitude(6, i, 50, 50, 50);
-		setLedAngle(6, i, 0, 0, (5 + i) * M_PI2 / 20);
-		setLedFreq(6, i, 0, 0, 1);
-
-		setLedAmplitude(1, 7 - i, 50, 50, 50);
-		setLedAngle(1, 7 - i, 0, 0, (14 + i) * M_PI2 / 20);
-		setLedFreq(1, 7 - i, 0, 0, 1);
-
-	}
-
-	// Third ring
-
-	for (int i = 2; i < 6; i++) {
-
-		setLedAmplitude(i, 2, 50, 50, 50);
-		setLedAngle(i, 2, 0, 0, (i - 2) * M_PI2 / 12);
-		setLedFreq(i, 2, 0, 0, 1);
-
-		setLedAmplitude(7 - i, 5, 50, 50, 50);
-		setLedAngle(7 - i, 5, 0, 0, (4 + i) * M_PI2 / 12);
-		setLedFreq(7 - i, 5, 0, 0, 1);
-
-	}
-
-	for (int i = 3; i < 5; i++) {
-
-		setLedAmplitude(5, i, 50, 50, 50);
-		setLedAngle(5, i, 0, 0, (1 + i) * M_PI2 / 12);
-		setLedFreq(5, i, 0, 0, 1);
-
-		setLedAmplitude(2, 7 - i, 50, 50, 50);
-		setLedAngle(2, 7 - i, 0, 0, (7 + i) * M_PI2 / 12);
-		setLedFreq(2, 7 - i, 0, 0, 1);
-
-	}
-
-	// Inner four
-
-	for (int i = 3; i < 5; i++) {
-
-		setLedAmplitude(i, 3, 50, 50, 50);
-		setLedAngle(i, 3, 0, 0, (i - 3) * M_PI2 / 4);
-		setLedFreq(i, 3, 0, 0, 1);
-
-		setLedAmplitude(7 - i, 4, 50, 50, 50);
-		setLedAngle(7 - i, 4, 0, 0, (-1 + i) * M_PI2 / 4);
-		setLedFreq(7 - i, 4, 0, 0, 1);
-
-	}
+	setLedAmplitude(0, 0, 127, 127, 127);
+	setLedAngle(0, 0, M_PI, M_PI, M_PI);
 
 	uint32_t then = 0;
 
