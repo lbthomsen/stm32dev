@@ -90,7 +90,7 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
-  ST7789_Init();
+  ST7789_Init(&hspi1);
 
   /* USER CODE END 2 */
 

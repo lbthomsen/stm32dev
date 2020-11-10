@@ -58,14 +58,19 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ST7789_SPI "foobar"
 #define ST7789_RST_Pin GPIO_PIN_2
 #define ST7789_RST_GPIO_Port GPIOA
 #define ST7789_DC_Pin GPIO_PIN_3
 #define ST7789_DC_GPIO_Port GPIOA
 #define ST7789_CS_Pin GPIO_PIN_4
 #define ST7789_CS_GPIO_Port GPIOA
+#define ST7789_SCK_Pin GPIO_PIN_5
+#define ST7789_SCK_GPIO_Port GPIOA
 #define ST7789_BKL_Pin GPIO_PIN_6
 #define ST7789_BKL_GPIO_Port GPIOA
+#define ST7789_MOSI_Pin GPIO_PIN_7
+#define ST7789_MOSI_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
