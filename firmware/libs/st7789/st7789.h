@@ -1,8 +1,8 @@
 #ifndef __ST7789_H
 #define __ST7789_H
 
-#include "fonts.h"
 #include "main.h"
+#include "../../libs/st7789/fonts.h"
 
 /* choose a Hardware SPI port to use. */
 #define ST7789_SPI_PORT hspi1
