@@ -1,0 +1,3 @@
+[submodule "firmware/st7789/stm32-st7789"]
+	path = firmware/st7789/stm32-st7789
+	url = git@github.com:lbthomsen/stm32-st7789.git
