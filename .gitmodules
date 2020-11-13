@@ -1,3 +1,9 @@
 [submodule "firmware/st7789/stm32-st7789"]
 	path = firmware/st7789/stm32-st7789
 	url = git@github.com:lbthomsen/stm32-st7789.git
+[submodule "firmware/nrf24l01master/stm32-st7789"]
+	path = firmware/nrf24l01master/stm32-st7789
+	url = git@github.com:lbthomsen/stm32-st7789.git
+[submodule "firmware/nrf24l01master/stm32-nrf24l01"]
+	path = firmware/nrf24l01master/stm32-nrf24l01
+	url = git@github.com:lbthomsen/stm32-nrf24l01.git
