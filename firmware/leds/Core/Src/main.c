@@ -110,17 +110,41 @@ int main(void)
   // Start the timer to get the blue led flashing every second
   HAL_TIM_Base_Start_IT(&htim7);
 
-  ws2812b_init(&htim3);
+  ws2812b_init(&htim3, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  setLedValue(0, 0, 0, 0, 10);
+  uint8_t state = 0;
+  uint32_t then = 0;
 
   while (1)
   {
+
+	uint32_t now = HAL_GetTick();
+	if (now % 100 == 0 && now != then) {
+
+		switch(state) {
+		case 0:
+			setLedValue(0, 0, 5, 0, 0);
+			state++;
+			break;
+		case 1:
+			setLedValue(0, 0, 0, 5, 0);
+			state++;
+			break;
+		case 2:
+			setLedValue(0, 0, 0, 0, 5);
+			state = 0;
+			break;
+		}
+
+		then = now;
+	}
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
