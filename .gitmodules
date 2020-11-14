@@ -7,3 +7,6 @@
 [submodule "firmware/nrf24l01master/stm32-nrf24l01"]
 	path = firmware/nrf24l01master/stm32-nrf24l01
 	url = git@github.com:lbthomsen/stm32-nrf24l01.git
+[submodule "firmware/leds/stm32-ws2812b"]
+	path = firmware/leds/stm32-ws2812b
+	url = git@github.com:lbthomsen/stm32-ws2812b.git
