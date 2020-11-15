@@ -24,6 +24,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <math.h>
+#include <arm_math.h>
+
 #include "ws2812b.h"
 
 /* USER CODE END Includes */
@@ -35,6 +38,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define M_PI2 2*M_PI
+
+#define LED_ROWS 1
+#define LED_COLS 1
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,6 +57,11 @@ TIM_HandleTypeDef htim7;
 DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 /* USER CODE BEGIN PV */
+
+// Base for calculating RGB values
+float led_angle[LED_ROWS][LED_COLS][3] = { 0 };
+float led_velocity[LED_ROWS][LED_COLS][3] = { 0 };
+uint8_t led_amplitude[LED_ROWS][LED_COLS][3] = { 0 };
 
 /* USER CODE END PV */
 
@@ -66,9 +80,34 @@ static void MX_TIM3_Init(void);
 
 // Handle built-in blue led hanging off of C13
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+
+//	if (htim->Instance == TIM4) {
+//
+//		// Update all led values - this is quite heavy for 8*8*3 it takes around 30-40 ms
+//		for (uint8_t col = 0; col < LED_COLS; col++) {
+//
+//			for (uint8_t row = 0; row < LED_ROWS; row++) {
+//
+//				for (uint8_t led = 0; led < 3; ++led) {
+//
+//					setLedValue(col, row, led, (uint8_t)(led_amplitude[row][col][led] - arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]));
+//
+//					led_angle[row][col][led] += led_velocity[row][col][led];
+//					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2; // Positive wrap around
+//					if (led_angle[row][col][led] < M_PI2) led_angle[row][col][led] += M_PI2; // Negative wrap around
+//
+//				}
+//
+//			}
+//
+//		}
+//
+//	}
+
 	if (htim->Instance == TIM7) {
 		HAL_GPIO_TogglePin(BUILTIN_LED_GPIO_Port, BUILTIN_LED_Pin);
 	}
+
 }
 
 /* USER CODE END 0 */
@@ -110,7 +149,7 @@ int main(void)
   // Start the timer to get the blue led flashing every second
   HAL_TIM_Base_Start_IT(&htim7);
 
-  ws2812b_init(&htim3, TIM_CHANNEL_1);
+  ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
   /* USER CODE END 2 */
 
@@ -126,20 +165,20 @@ int main(void)
 	uint32_t now = HAL_GetTick();
 	if (now % 100 == 0 && now != then) {
 
-		switch(state) {
-		case 0:
-			setLedValue(0, 0, 5, 0, 0);
-			state++;
-			break;
-		case 1:
-			setLedValue(0, 0, 0, 5, 0);
-			state++;
-			break;
-		case 2:
-			setLedValue(0, 0, 0, 0, 5);
-			state = 0;
-			break;
-		}
+//		switch(state) {
+//		case 0:
+//			setLedValues(0, 0, 5, 0, 0);
+//			state++;
+//			break;
+//		case 1:
+//			setLedValues(0, 0, 0, 5, 0);
+//			state++;
+//			break;
+//		case 2:
+//			setLedValues(0, 0, 0, 0, 5);
+//			state = 0;
+//			break;
+//		}
 
 		then = now;
 	}
