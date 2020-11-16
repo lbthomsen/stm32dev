@@ -178,15 +178,16 @@ int main(void)
   // Start the timer to get the blue led flashing every second
   HAL_TIM_Base_Start_IT(&htim7);
 
+  // Get the ws2812 bitstream going - this will run continously at 800 kHz
   ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
   // Start timer to cycle colors
   HAL_TIM_Base_Start_IT(&htim4);
 
 
-  setLedAmplitude(0, 0, 50, 50, 50);
-  setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3);
-  setLedFreq(0, 0, 1, 1, 1);
+  setLedAmplitude(0, 0, 126, 126, 126); // Full on it is very bright
+  setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
+  setLedFreq(0, 0, 0.1, 0.11, 0.12); // Slow and out of sync
 
   /* USER CODE END 2 */
 
@@ -196,6 +197,8 @@ int main(void)
 
   while (1)
   {
+
+	// Nothing to be done here - everything runs off of timers.
 
     /* USER CODE END WHILE */
 
@@ -237,11 +240,11 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }

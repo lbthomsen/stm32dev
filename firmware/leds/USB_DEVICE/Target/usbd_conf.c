@@ -26,7 +26,7 @@
 #include "usbd_core.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "usbd_cdc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,6 +71,10 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
   if(pcdHandle->Instance==USB_OTG_FS)
   {
   /* USER CODE BEGIN USB_OTG_FS_MspInit 0 */
+
+	  // Request up to 500 mA
+	  uint16_t length;
+	  *(USBD_CDC.GetFSConfigDescriptor(&length) + 8) = (500 / 2);
 
   /* USER CODE END USB_OTG_FS_MspInit 0 */
 
