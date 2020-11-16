@@ -14,6 +14,11 @@
   *
   * This demonstrate the use of both of these leds.
   *
+  * This software component is licensed by lbthomsen under MIT license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/MIT
+  *
   ******************************************************************************
   */
 /* USER CODE END Header */
@@ -187,7 +192,7 @@ int main(void)
 
   setLedAmplitude(0, 0, 126, 126, 126); // Full on it is very bright
   setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
-  setLedFreq(0, 0, 0.1, 0.11, 0.12); // Slow and out of sync
+  setLedFreq(0, 0, 3, 3.1, 3.2); // Slow and out of sync
 
   /* USER CODE END 2 */
 
