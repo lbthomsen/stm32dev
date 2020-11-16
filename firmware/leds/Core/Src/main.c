@@ -40,6 +40,7 @@
 /* USER CODE BEGIN PD */
 
 #define M_PI2 2*M_PI
+#define SAMPLE_FREQ 100
 
 #define LED_ROWS 1
 #define LED_COLS 1
@@ -53,6 +54,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim7;
 DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
@@ -71,6 +73,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM7_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -81,34 +84,59 @@ static void MX_TIM3_Init(void);
 // Handle built-in blue led hanging off of C13
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
-//	if (htim->Instance == TIM4) {
-//
-//		// Update all led values - this is quite heavy for 8*8*3 it takes around 30-40 ms
-//		for (uint8_t col = 0; col < LED_COLS; col++) {
-//
-//			for (uint8_t row = 0; row < LED_ROWS; row++) {
-//
-//				for (uint8_t led = 0; led < 3; ++led) {
-//
-//					setLedValue(col, row, led, (uint8_t)(led_amplitude[row][col][led] - arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]));
-//
-//					led_angle[row][col][led] += led_velocity[row][col][led];
-//					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2; // Positive wrap around
-//					if (led_angle[row][col][led] < M_PI2) led_angle[row][col][led] += M_PI2; // Negative wrap around
-//
-//				}
-//
-//			}
-//
-//		}
-//
-//	}
+	if (htim->Instance == TIM4) {
+
+		// Update all led values - this is quite heavy for 8*8*3 it takes around 30-40 ms
+		for (uint8_t col = 0; col < LED_COLS; col++) {
+
+			for (uint8_t row = 0; row < LED_ROWS; row++) {
+
+				for (uint8_t led = 0; led < 3; ++led) {
+
+					setLedValue(col, row, led, (uint8_t)(led_amplitude[row][col][led] - arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]));
+
+					led_angle[row][col][led] += led_velocity[row][col][led];
+					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2; // Positive wrap around
+					if (led_angle[row][col][led] < M_PI2) led_angle[row][col][led] += M_PI2; // Negative wrap around
+
+				}
+
+			}
+
+		}
+
+	}
 
 	if (htim->Instance == TIM7) {
 		HAL_GPIO_TogglePin(BUILTIN_LED_GPIO_Port, BUILTIN_LED_Pin);
 	}
 
 }
+
+void setLedAngle(uint8_t col, uint8_t row, float r, float g, float b) {
+
+	led_angle[col][row][R] = r;
+	led_angle[col][row][G] = g;
+	led_angle[col][row][B] = b;
+
+}
+
+void setLedFreq(uint8_t col, uint8_t row, float r, float g, float b) {
+
+	led_velocity[col][row][R] = M_PI2 / (SAMPLE_FREQ / r);
+	led_velocity[col][row][G] = M_PI2 / (SAMPLE_FREQ / g);
+	led_velocity[col][row][B] = M_PI2 / (SAMPLE_FREQ / b);
+
+}
+
+void setLedAmplitude(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
+
+	led_amplitude[col][row][R] = r;
+	led_amplitude[col][row][G] = g;
+	led_amplitude[col][row][B] = b;
+
+}
+
 
 /* USER CODE END 0 */
 
@@ -144,6 +172,7 @@ int main(void)
   MX_TIM7_Init();
   MX_USB_DEVICE_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   // Start the timer to get the blue led flashing every second
@@ -151,38 +180,22 @@ int main(void)
 
   ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
+  // Start timer to cycle colors
+  HAL_TIM_Base_Start_IT(&htim4);
+
+
+  setLedAmplitude(0, 0, 50, 50, 50);
+  setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3);
+  setLedFreq(0, 0, 1, 1, 1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint8_t state = 0;
-  uint32_t then = 0;
 
   while (1)
   {
-
-	uint32_t now = HAL_GetTick();
-	if (now % 100 == 0 && now != then) {
-
-//		switch(state) {
-//		case 0:
-//			setLedValues(0, 0, 5, 0, 0);
-//			state++;
-//			break;
-//		case 1:
-//			setLedValues(0, 0, 0, 5, 0);
-//			state++;
-//			break;
-//		case 2:
-//			setLedValues(0, 0, 0, 0, 5);
-//			state = 0;
-//			break;
-//		}
-
-		then = now;
-	}
-
 
     /* USER CODE END WHILE */
 
@@ -224,11 +237,11 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -294,6 +307,51 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 8399;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 99;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * @brief TIM7 Initialization Function
   * @param None
   * @retval None
@@ -342,7 +400,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
 
 }
@@ -360,7 +418,6 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(BUILTIN_LED_GPIO_Port, BUILTIN_LED_Pin, GPIO_PIN_SET);
