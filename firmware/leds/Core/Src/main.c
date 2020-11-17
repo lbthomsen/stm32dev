@@ -91,6 +91,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 	if (htim->Instance == TIM4) {
 
+		HAL_GPIO_WritePin(CALC_GPIO_Port, CALC_Pin, GPIO_PIN_SET);
+
 		// Update all led values - this is quite heavy for 8*8*3 it takes around 30-40 ms
 		for (uint8_t col = 0; col < LED_COLS; col++) {
 
@@ -109,6 +111,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			}
 
 		}
+
+		HAL_GPIO_WritePin(CALC_GPIO_Port, CALC_Pin, GPIO_PIN_RESET);
 
 	}
 
@@ -190,9 +194,9 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim4);
 
 
-  setLedAmplitude(0, 0, 50, 50, 50); // Full on it is very bright
+  setLedAmplitude(0, 0, 127, 127, 127); // Full on it is very bright
   setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
-  setLedFreq(0, 0, 3, 3.01, 3.02); // Slow and out of sync
+  setLedFreq(0, 0, 0.2, 0.2, 0.2); // Slow and out of sync
 
   /* USER CODE END 2 */
 
@@ -430,12 +434,15 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(BUILTIN_LED_GPIO_Port, BUILTIN_LED_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : BUILTIN_LED_Pin */
-  GPIO_InitStruct.Pin = BUILTIN_LED_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, CALC_Pin|BUFF_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : BUILTIN_LED_Pin CALC_Pin BUFF_Pin */
+  GPIO_InitStruct.Pin = BUILTIN_LED_Pin|CALC_Pin|BUFF_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(BUILTIN_LED_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 }
 
