@@ -51,20 +51,20 @@
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
+DMA_HandleTypeDef hdma_adc2;
 
 DAC_HandleTypeDef hdac;
 DMA_HandleTypeDef hdma_dac1;
 DMA_HandleTypeDef hdma_dac2;
 
-TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
-TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim8;
 
 /* USER CODE BEGIN PV */
 
 // The actual buffers
-uint32_t adc1_buffer[SAMPLE_BUFFER_SIZE * 2] = {0};
-uint32_t adc2_buffer[SAMPLE_BUFFER_SIZE * 2] = {0};
+uint32_t adc1_buffer[SAMPLE_BUFFER_SIZE * 2 * 2] = {0};
+uint32_t adc2_buffer[SAMPLE_BUFFER_SIZE * 2 * 2] = {0};
 uint32_t dac1_buffer[SAMPLE_BUFFER_SIZE * 2] = {0};
 uint32_t dac2_buffer[SAMPLE_BUFFER_SIZE * 2] = {0};
 
@@ -76,10 +76,16 @@ uint32_t *dac2_buffer_ptr = dac2_buffer;
 
 float osc1_angle = 0;
 float osc1_angle_per_sample = 0;
-float osc1_amp = 0.5;
+float osc1_amp = 0.99;
 float osc2_angle = 0;
 float osc2_angle_per_sample = 0;
-float osc2_amp = 0.9;
+float osc2_amp = 0.99;
+
+uint32_t dac_count = 0;
+uint32_t adc_count = 0;
+
+uint32_t pot0 = 0;
+uint32_t pot1 = 0;
 
 /* USER CODE END PV */
 
@@ -90,9 +96,8 @@ static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_DAC_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
-static void MX_TIM6_Init(void);
+static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -108,44 +113,48 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 }
 
-void update_osc1() {
+static inline void update_osc_buffers() {
+
+	HAL_GPIO_WritePin(DBG0_GPIO_Port, DBG0_Pin, GPIO_PIN_SET);
+
 	for (uint8_t sample = 0; sample < SAMPLE_BUFFER_SIZE; sample++) {
+
 		*dac1_buffer_ptr = (uint32_t) (DAC_MID + osc1_amp * arm_sin_f32(osc1_angle) * DAC_MID);
-		osc1_angle += osc1_angle_per_sample;
-		dac1_buffer_ptr++;
-
-		if (osc1_angle > M_PI2) osc1_angle -= M_PI2;
-	}
-}
-
-void update_osc2() {
-	for (uint8_t sample = 0; sample < SAMPLE_BUFFER_SIZE; sample++) {
 		*dac2_buffer_ptr = (uint32_t) (DAC_MID + osc2_amp * arm_sin_f32(osc2_angle) * DAC_MID);
+		osc1_angle += osc1_angle_per_sample;
 		osc2_angle += osc2_angle_per_sample;
+		dac1_buffer_ptr++;
 		dac2_buffer_ptr++;
 
+		if (osc1_angle > M_PI2) osc1_angle -= M_PI2;
 		if (osc2_angle > M_PI2) osc2_angle -= M_PI2;
+
 	}
+
+	dac_count++;
+
+	HAL_GPIO_WritePin(DBG0_GPIO_Port, DBG0_Pin, GPIO_PIN_RESET);
+
 }
 
+// Contrary to the name this callback actually handles both channels
 void HAL_DAC_ConvCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
+
 	dac1_buffer_ptr = &dac1_buffer[SAMPLE_BUFFER_SIZE];
-    update_osc1();
+    dac2_buffer_ptr = &dac2_buffer[SAMPLE_BUFFER_SIZE];
+
+    update_osc_buffers();
+
 }
 
+// Contrary to the name this callback actually handles both channels
 void HAL_DAC_ConvHalfCpltCallbackCh1(DAC_HandleTypeDef *hdac) {
+
 	dac1_buffer_ptr = &dac1_buffer[0];
-	update_osc1();
-}
+	dac2_buffer_ptr = &dac2_buffer[0];
 
-void HAL_DAC_ConvCpltCallbackCh2(DAC_HandleTypeDef *hdac) {
-	dac2_buffer_ptr= &dac2_buffer[SAMPLE_BUFFER_SIZE];
-    update_osc2();
-}
+	update_osc_buffers();
 
-void HAL_DAC_ConvHalfCpltCallbackCh2(DAC_HandleTypeDef *hdac) {
-	dac2_buffer_ptr= &dac2_buffer[0];
-    update_osc2();
 }
 
 void set_osc1_freq(float freq) {
@@ -154,6 +163,47 @@ void set_osc1_freq(float freq) {
 
 void set_osc2_freq(float freq) {
 	osc2_angle_per_sample = M_PI2 / (SAMPLE_FREQUENCY / freq);
+}
+
+// Get pot values - average of 48 samples each pot
+static inline void update_pots(uint32_t *sample_ptr) {
+
+	HAL_GPIO_WritePin(DBG0_GPIO_Port, DBG0_Pin, GPIO_PIN_SET);
+
+	uint32_t pot0_value = 0;
+	uint32_t pot1_value = 0;
+	for (uint8_t i = 0; i < SAMPLE_BUFFER_SIZE; ++i) {
+		pot0_value += (uint32_t)*sample_ptr;
+		sample_ptr++;
+		pot1_value += (uint32_t)*sample_ptr;
+		sample_ptr++;
+	}
+	pot0 = pot0_value / SAMPLE_BUFFER_SIZE;
+	pot1 = pot1_value / SAMPLE_BUFFER_SIZE;
+
+	set_osc1_freq((float)(4096 - pot0));
+	osc1_amp = (float)(4096.0 - pot1) / 4096;
+
+	adc_count++;
+
+	HAL_GPIO_WritePin(DBG0_GPIO_Port, DBG0_Pin, GPIO_PIN_RESET);
+
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+	if (hadc->Instance == ADC2) {
+
+		update_pots(&adc2_buffer[SAMPLE_BUFFER_SIZE]);
+
+	}
+}
+
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
+	if (hadc->Instance == ADC2) {
+
+		update_pots(&adc2_buffer[0]);
+
+	}
 }
 
 /* USER CODE END 0 */
@@ -190,16 +240,18 @@ int main(void)
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_DAC_Init();
-  MX_TIM2_Init();
   MX_TIM4_Init();
-  MX_TIM6_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
 
   // Start the timer to get the blue led flashing every second
   HAL_TIM_Base_Start_IT(&htim4);
 
-  HAL_TIM_Base_Start_IT(&htim2);
-  HAL_TIM_Base_Start_IT(&htim6);
+  //HAL_TIM_Base_Start_IT(&htim2);
+  //HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Base_Start_IT(&htim8);
+
+  HAL_ADC_Start_DMA(&hadc2, adc2_buffer, SAMPLE_BUFFER_SIZE * 2 * 2);
 
   HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, dac1_buffer, SAMPLE_BUFFER_SIZE * 2, DAC_ALIGN_12B_R);
   HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_2, dac2_buffer, SAMPLE_BUFFER_SIZE * 2, DAC_ALIGN_12B_R);
@@ -210,9 +262,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   set_osc1_freq(440);
-  set_osc2_freq(440);
+  set_osc2_freq(55);
 
-  uint32_t then = -1;
+  uint32_t then = 0;
 
   while (1)
   {
@@ -293,7 +345,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
@@ -343,26 +395,34 @@ static void MX_ADC2_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc2.Instance = ADC2;
-  hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc2.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc2.Init.ScanConvMode = DISABLE;
+  hadc2.Init.ScanConvMode = ENABLE;
   hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
-  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  hadc2.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T8_TRGO;
   hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc2.Init.NbrOfConversion = 1;
-  hadc2.Init.DMAContinuousRequests = DISABLE;
-  hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc2.Init.NbrOfConversion = 2;
+  hadc2.Init.DMAContinuousRequests = ENABLE;
+  hadc2.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc2) != HAL_OK)
   {
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_7;
+  sConfig.Rank = 2;
   if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -399,7 +459,7 @@ static void MX_DAC_Init(void)
   }
   /** DAC channel OUT1 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_T2_TRGO;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T8_TRGO;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1) != HAL_OK)
   {
@@ -407,7 +467,6 @@ static void MX_DAC_Init(void)
   }
   /** DAC channel OUT2 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_T6_TRGO;
   if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -415,51 +474,6 @@ static void MX_DAC_Init(void)
   /* USER CODE BEGIN DAC_Init 2 */
 
   /* USER CODE END DAC_Init 2 */
-
-}
-
-/**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = AUD_PRE;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = AUD_CNT;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -509,40 +523,48 @@ static void MX_TIM4_Init(void)
 }
 
 /**
-  * @brief TIM6 Initialization Function
+  * @brief TIM8 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM6_Init(void)
+static void MX_TIM8_Init(void)
 {
 
-  /* USER CODE BEGIN TIM6_Init 0 */
+  /* USER CODE BEGIN TIM8_Init 0 */
 
-  /* USER CODE END TIM6_Init 0 */
+  /* USER CODE END TIM8_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  /* USER CODE BEGIN TIM6_Init 1 */
+  /* USER CODE BEGIN TIM8_Init 1 */
 
-  /* USER CODE END TIM6_Init 1 */
-  htim6.Instance = TIM6;
-  htim6.Init.Prescaler = AUD_PRE;
-  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = AUD_CNT;
-  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  /* USER CODE END TIM8_Init 1 */
+  htim8.Instance = TIM8;
+  htim8.Init.Prescaler = AUD_PRE;
+  htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim8.Init.Period = AUD_CNT;
+  htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim8.Init.RepetitionCounter = 0;
+  htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim8, &sClockSourceConfig) != HAL_OK)
   {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim8, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM6_Init 2 */
+  /* USER CODE BEGIN TIM8_Init 2 */
 
-  /* USER CODE END TIM6_Init 2 */
+  /* USER CODE END TIM8_Init 2 */
 
 }
 
@@ -558,14 +580,17 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 4, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 4, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
 }
 
@@ -582,17 +607,19 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(BUILTIN_LED_GPIO_Port, BUILTIN_LED_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : BUILTIN_LED_Pin */
-  GPIO_InitStruct.Pin = BUILTIN_LED_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, DBG0_Pin|DBG1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : BUILTIN_LED_Pin DBG0_Pin DBG1_Pin */
+  GPIO_InitStruct.Pin = BUILTIN_LED_Pin|DBG0_Pin|DBG1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(BUILTIN_LED_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 }
 
