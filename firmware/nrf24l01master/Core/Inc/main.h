@@ -64,6 +64,12 @@ void Error_Handler(void);
 #define ST7789_DC_GPIO_Port GPIOA
 #define ST7789_CS_Pin GPIO_PIN_4
 #define ST7789_CS_GPIO_Port GPIOA
+#define NRF24_SCK_Pin GPIO_PIN_13
+#define NRF24_SCK_GPIO_Port GPIOB
+#define NRF24_MISO_Pin GPIO_PIN_14
+#define NRF24_MISO_GPIO_Port GPIOB
+#define NRF24_MOSI_Pin GPIO_PIN_15
+#define NRF24_MOSI_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

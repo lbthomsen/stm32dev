@@ -24,7 +24,6 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "string.h"
-#include "st7789.h"
 #include "nrf24l01.h"
 /* USER CODE END Includes */
 
@@ -96,7 +95,7 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
-  ST7789_Init(&hspi1);
+  nrf24l01_init(&hspi);
 
   /* USER CODE END 2 */
 
@@ -105,9 +104,6 @@ int main(void)
 
   uint32_t loop_count = 0;
   uint32_t then = -1;
-
-  ST7789_WriteString(10, 20, "Count:", Font_11x18, WHITE, BLACK);
-  ST7789_WriteString(140, 20, "       0", Font_11x18, WHITE, BLACK);
 
   while (1)
   {
@@ -195,7 +191,7 @@ static void MX_SPI1_Init(void)
   /* SPI1 parameter configuration*/
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.Direction = SPI_DIRECTION_1LINE;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
@@ -264,7 +260,6 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
