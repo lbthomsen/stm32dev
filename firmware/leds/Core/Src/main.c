@@ -193,16 +193,14 @@ int main(void)
   // Start timer to cycle colors
   HAL_TIM_Base_Start_IT(&htim4);
 
-
   setLedAmplitude(0, 0, 127, 127, 127); // Full on it is very bright
   setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
-  setLedFreq(0, 0, 0.2, 0.2, 0.2); // Slow and out of sync
+  setLedFreq(0, 0, 0.1, 0.101, 0.102); // Slow and out of sync
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
 
   while (1)
   {
