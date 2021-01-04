@@ -396,12 +396,6 @@ static inline void update_next_buffer() {
 		// that into the buffer
 		memcpy(dma_buffer_pointer, zeros, 48);
 
-//      Old version without the pre-filled buffer
-//		for (uint8_t i = 0; i < BUFFER_SIZE; i++) { // Fill buffer with zeros
-//			*(uint16_t*) dma_buffer_pointer = (uint16_t) 0;
-//			dma_buffer_pointer++;
-//		}
-
 		res_cnt++;
 
 		if (res_cnt >= LED_RESET_CYCLES) { // done enough reset cycles
@@ -420,14 +414,6 @@ static inline void update_next_buffer() {
 			memcpy(dma_buffer_pointer, color_value[led[c]], 16);
 			dma_buffer_pointer += 8;
 
-			// Old version
-//			uint8_t value = led[c];
-//			// Now deal with each bit
-//			for (uint8_t b = 0; b < 8; b++) {
-//				*(uint16_t*) dma_buffer_pointer =
-//						value >> (7 - b) != 0 ? LED_ON : LED_OFF;
-//				dma_buffer_pointer++;
-//			}
 		}
 
 		// Now move to next LED switching to reset state when all leds have been updated
