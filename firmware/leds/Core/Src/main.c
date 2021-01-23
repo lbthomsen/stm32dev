@@ -105,8 +105,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 				for (uint8_t led = 0; led < 3; ++led) {
 
-					//float value = led_amplitude[row][col][led] - (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]);
-					float value = led_offset[row][col][led];
+					float value = led_amplitude[row][col][led] - (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]);
+					value += led_offset[row][col][led];
 					if (value < 0) value = 0;
 					if (value > 255) value = 255;
 
@@ -207,13 +207,13 @@ int main(void)
   // Get the ws2812 bitstream going - this will run continously at 800 kHz
   ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
-  setLedAmplitude(0, 0, 0, 0, 127); // Full on it is very bright
-  setLedOffset(0, 0, 0, 0, 20);
-  setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
-  setLedFreq(0, 0, 0.2, 0.201, 0.5); // Slow and out of sync
-
   // Start timer to cycle colors
   HAL_TIM_Base_Start_IT(&htim4);
+
+  setLedAmplitude(0, 0, 127, 127, 127); // Full on it is very bright
+  setLedOffset(0, 0, 0, 0, 0);
+  setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
+  setLedFreq(0, 0, 0.2, 0.201, 0.202); // Slow and out of sync
 
   /* USER CODE END 2 */
 
