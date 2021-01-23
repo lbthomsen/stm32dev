@@ -12,7 +12,9 @@
   * The stm32dev board have two built-in leds.  A regular blue led attached to
   * PC13 and a ws2812b RGB led attached to PC6.
   *
-  * This demonstrate the use of both of these leds.
+  * This demonstrate the use of both of these leds.  The regular blue LED is driven
+  * by TIM7 while the value updates of the RGB led is driven by TIM4.  TIM3 is
+  * clocking the 800 kHz PWM driving the ws2812.
   *
   * This software component is licensed by lbthomsen under MIT license,
   * the "License"; You may not use this file except in compliance with the
@@ -70,6 +72,8 @@ DMA_HandleTypeDef hdma_tim3_ch3;
 float led_angle[LED_ROWS][LED_COLS][3] = { 0 };
 float led_velocity[LED_ROWS][LED_COLS][3] = { 0 };
 uint8_t led_amplitude[LED_ROWS][LED_COLS][3] = { 0 };
+uint8_t led_offset[LED_ROWS][LED_COLS][3] = { 0 };
+
 
 /* USER CODE END PV */
 
@@ -95,13 +99,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_GPIO_WritePin(CALC_GPIO_Port, CALC_Pin, GPIO_PIN_SET);
 
 		// Update all led values - this is quite heavy for 8*8*3 it takes around 30-40 ms
-		for (uint8_t col = 0; col < LED_COLS; col++) {
+		for (uint16_t col = 0; col < LED_COLS; col++) {
 
-			for (uint8_t row = 0; row < LED_ROWS; row++) {
+			for (uint16_t row = 0; row < LED_ROWS; row++) {
 
 				for (uint8_t led = 0; led < 3; ++led) {
 
-					setLedValue(col, row, led, (uint8_t)(led_amplitude[row][col][led] - arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]));
+					float value = led_amplitude[row][col][led] - (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]);
+					//value += led_offset[row][col][led];
+					if (value < 0) value = 0;
+					if (value > 255) value = 255;
+
+					setLedValue(col, row, led, (uint8_t)value);
 
 					led_angle[row][col][led] += led_velocity[row][col][led];
 					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2; // Positive wrap around
@@ -147,6 +156,13 @@ void setLedAmplitude(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) 
 
 }
 
+void setLedOffset(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
+
+	led_offset[col][row][R] = r;
+	led_offset[col][row][G] = g;
+	led_offset[col][row][B] = b;
+
+}
 
 /* USER CODE END 0 */
 
@@ -194,9 +210,10 @@ int main(void)
   // Start timer to cycle colors
   HAL_TIM_Base_Start_IT(&htim4);
 
-  setLedAmplitude(0, 0, 50, 50, 50); // Full on it is very bright
+  setLedAmplitude(0, 0, 0, 0, 127); // Full on it is very bright
+  setLedOffset(0, 0, 0, 0, 0);
   setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
-  setLedFreq(0, 0, 0.1, 0.101, 0.102); // Slow and out of sync
+  setLedFreq(0, 0, 0.2, 0.201, 0.5); // Slow and out of sync
 
   /* USER CODE END 2 */
 

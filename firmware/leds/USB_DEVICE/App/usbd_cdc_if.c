@@ -263,7 +263,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
 
-  for (uint32_t i = 0; i < Len; i++) {
+  for (uint32_t i = 0; i < (uint32_t)&Len; i++) {
 
   }
 
