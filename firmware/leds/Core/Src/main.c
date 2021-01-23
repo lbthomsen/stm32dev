@@ -207,13 +207,13 @@ int main(void)
   // Get the ws2812 bitstream going - this will run continously at 800 kHz
   ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
-  // Start timer to cycle colors
-  HAL_TIM_Base_Start_IT(&htim4);
-
   setLedAmplitude(0, 0, 0, 0, 127); // Full on it is very bright
   setLedOffset(0, 0, 0, 0, 20);
   setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
   setLedFreq(0, 0, 0.2, 0.201, 0.5); // Slow and out of sync
+
+  // Start timer to cycle colors
+  HAL_TIM_Base_Start_IT(&htim4);
 
   /* USER CODE END 2 */
 
