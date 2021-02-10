@@ -394,7 +394,8 @@ static inline void update_next_buffer() {
 
 		// This one is simple - we got a bunch of zeros of the right size - just throw
 		// that into the buffer
-		memcpy(dma_buffer_pointer, zeros, 48);
+		//memcpy(dma_buffer_pointer, zeros, 48);
+		memset(dma_buffer_pointer, 0, 48);
 
 		res_cnt++;
 

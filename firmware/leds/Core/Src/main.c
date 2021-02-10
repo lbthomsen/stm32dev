@@ -69,8 +69,8 @@ DMA_HandleTypeDef hdma_tim3_ch3;
 /* USER CODE BEGIN PV */
 
 // Base for calculating RGB values
-float led_angle[LED_ROWS][LED_COLS][3] = { 0 };
-float led_velocity[LED_ROWS][LED_COLS][3] = { 0 };
+double led_angle[LED_ROWS][LED_COLS][3] = { 0 };
+double led_velocity[LED_ROWS][LED_COLS][3] = { 0 };
 uint8_t led_amplitude[LED_ROWS][LED_COLS][3] = { 0 };
 uint8_t led_offset[LED_ROWS][LED_COLS][3] = { 0 };
 
@@ -105,16 +105,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 				for (uint8_t led = 0; led < 3; ++led) {
 
-					float value = led_amplitude[row][col][led] - (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]);
-					value += led_offset[row][col][led];
+					double value = (float)(led_offset[row][col][led] + led_amplitude[row][col][led] - (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]));
+					//value += led_offset[row][col][led];
 					if (value < 0) value = 0;
 					if (value > 255) value = 255;
 
 					setLedValue(col, row, led, (uint8_t)value);
 
-					led_angle[row][col][led] += led_velocity[row][col][led];
-					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2; // Positive wrap around
-					if (led_angle[row][col][led] < M_PI2) led_angle[row][col][led] += M_PI2; // Negative wrap around
+					led_angle[row][col][led] = (float)(led_angle[row][col][led] + led_velocity[row][col][led]);
+					if (led_angle[row][col][led] >= M_PI2) {
+						led_angle[row][col][led] = led_angle[row][col][led] - M_PI2; // Positive wrap around
+					}
+					if (led_angle[row][col][led] <= M_PI2) {
+						led_angle[row][col][led] = led_angle[row][col][led] + M_PI2; // Negative wrap around
+					}
 
 				}
 
@@ -132,7 +136,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 }
 
-void setLedAngle(uint8_t col, uint8_t row, float r, float g, float b) {
+void setLedAngle(uint8_t col, uint8_t row, double r, double g, float b) {
 
 	led_angle[col][row][R] = r;
 	led_angle[col][row][G] = g;
@@ -210,7 +214,7 @@ int main(void)
   // Start timer to cycle colors
   HAL_TIM_Base_Start_IT(&htim4);
 
-  setLedAmplitude(0, 0, 127, 127, 127); // Full on it is very bright
+  setLedAmplitude(0, 0, 64, 0, 0); // Full on it is very bright
   setLedOffset(0, 0, 0, 0, 0);
   setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
   setLedFreq(0, 0, 0.2, 0.201, 0.202); // Slow and out of sync
