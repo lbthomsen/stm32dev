@@ -10,3 +10,6 @@
 [submodule "firmware/leds/stm32-ws2812b"]
 	path = firmware/leds/stm32-ws2812b
 	url = git@github.com:lbthomsen/stm32-ws2812b.git
+[submodule "firmware/ws2812panel/stm32-ws2812b"]
+	path = firmware/ws2812panel/stm32-ws2812b
+	url = git@github.com:lbthomsen/stm32-ws2812b.git
