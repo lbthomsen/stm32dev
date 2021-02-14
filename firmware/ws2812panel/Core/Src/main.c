@@ -22,10 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "math.h"
-#include "arm_math.h"
-
-#include "ws2812b.h"
+#include <math.h>
+#include <arm_math.h>
 
 /* USER CODE END Includes */
 
@@ -46,24 +44,24 @@
 #define M_PI2 2 * M_PI   // Full circle
 #define SAMPLE_FREQ 100  // Frequency of Timer 4
 
-//// Buffer allocated will be twice this
-//#define BUFFER_SIZE 24
+// Buffer allocated will be twice this
+#define BUFFER_SIZE 24
 
-//// LED on/off counts.  PWM timer is running 104 counts.
-////#define LED_PERIOD T3_CNT + 1
-//#define LED_OFF 33
-//#define LED_ON 71
-//#define LED_RESET_CYCLES 10
-//
-//// Define LED driver state machine states
-//#define LED_RES 0
-//#define LED_DAT 1
+// LED on/off counts.  PWM timer is running 104 counts.
+//#define LED_PERIOD T3_CNT + 1
+#define LED_OFF 33
+#define LED_ON 71
+#define LED_RESET_CYCLES 10
+
+// Define LED driver state machine states
+#define LED_RES 0
+#define LED_DAT 1
 
 #define LED_ROWS 8
 #define LED_COLS 8
-//#define G 0
-//#define R 1
-//#define B 2
+#define G 0
+#define R 1
+#define B 2
 
 /* USER CODE END PD */
 
@@ -79,6 +77,275 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 
 /* USER CODE BEGIN PV */
 
+// Bunch of zeros used to latch the ws2812
+const uint16_t zeros[24] = {0}; // Used to trigger latching
+
+// Look up table for led color bit patterns.  "Waste" 4k of flash but is a
+// lot faster (not measured accurately but I'd say about double).
+const uint16_t color_value[256][8] = {
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF, LED_ON},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_OFF},
+		{LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON, LED_ON}
+};
+
+// The actual DMA buffer - contains two halves each container 24 byte
+uint16_t dma_buffer[BUFFER_SIZE * 2] = { 0 };
+
+// Pointer to above buffer.  This will be set to the start of the half way point
+uint16_t *dma_buffer_pointer;
 
 // Base for calculating RGB values
 float led_angle[LED_ROWS][LED_COLS][3] = { 0 };
@@ -88,10 +355,10 @@ uint8_t led_amplitude[LED_ROWS][LED_COLS][3] = { 0 };
 // LED RGB values
 uint8_t led_value[LED_ROWS][LED_COLS][3] = { 0 };
 
-//uint8_t led_state = LED_RES;
-//uint8_t res_cnt = 0;
-//uint8_t led_col = 0;
-//uint8_t led_row = 0;
+uint8_t led_state = LED_RES;
+uint8_t res_cnt = 0;
+uint8_t led_col = 0;
+uint8_t led_row = 0;
 
 uint32_t update_count = 0;
 
@@ -110,64 +377,63 @@ static void MX_TIM4_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-///*
-// * Update next 24 bits in the dma buffer - assume dma_buffer_pointer is pointing
-// * to the buffer that is safe to update.
-// *
-// */
-//static inline void update_next_buffer() {
-//
-//	// For debugging and measuring calculation time - toggle GPIO pin
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
-//
-//	// A simple state machine - we're either resetting (two buffers worth of zeros) or
-//	// we are transmitting data
-//
-//	if (led_state == LED_RES) { // Reset state - 10 or more full buffers of zeros
-//
-//		// This one is simple - we got a bunch of zeros of the right size - just throw
-//		// that into the buffer
-//		//memcpy(dma_buffer_pointer, zeros, 48);
-//		memset(dma_buffer_pointer, 0, 48);
-//
-//		res_cnt++;
-//
-//		if (res_cnt >= LED_RESET_CYCLES) { // done enough reset cycles
-//			led_col = 0;	// prepare to send data
-//			led_row = 0;
-//			led_state = LED_DAT;
-//		}
-//
-//	} else { // LED state
-//
-//		// First let's deal with the current LED
-//		uint8_t *led = led_value[led_col][led_row];
-//		for (uint8_t c = 0; c < 3; c++) { // This is the bitch - need to be optimized!
-//
-//			// Copy values from the pre-filled color_value buffer
-//			memcpy(dma_buffer_pointer, color_value[led[c]], 16);
-//			dma_buffer_pointer += 8;
-//
-//		}
-//
-//		// Now move to next LED switching to reset state when all leds have been updated
-//		led_col++; // Next column
-//		if (led_col >= LED_COLS) { // reached top
-//			led_col = 0; // back to first
-//			led_row++; // and move on to next row
-//			if (led_row >= LED_ROWS) { // reached end
-//
-//				res_cnt = 0;
-//				led_state = LED_RES;
-//			}
-//		}
-//
-//	}
-//
-//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
-//
-//}
-//
+/*
+ * Update next 24 bits in the dma buffer - assume dma_buffer_pointer is pointing
+ * to the buffer that is safe to update.
+ *
+ */
+static inline void update_next_buffer() {
+
+	// For debugging and measuring calculation time - toggle GPIO pin
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+
+	// A simple state machine - we're either resetting (two buffers worth of zeros) or
+	// we are transmitting data
+
+	if (led_state == LED_RES) { // Reset state - 10 or more full buffers of zeros
+
+		// This one is simple - we got a bunch of zeros of the right size - just throw
+		// that into the buffer
+		memcpy(dma_buffer_pointer, zeros, 48);
+
+		res_cnt++;
+
+		if (res_cnt >= LED_RESET_CYCLES) { // done enough reset cycles
+			led_col = 0;	// prepare to send data
+			led_row = 0;
+			led_state = LED_DAT;
+		}
+
+	} else { // LED state
+
+		// First let's deal with the current LED
+		uint8_t *led = led_value[led_col][led_row];
+		for (uint8_t c = 0; c < 3; c++) { // This is the bitch - need to be optimized!
+
+			// Copy values from the pre-filled color_value buffer
+			memcpy(dma_buffer_pointer, color_value[led[c]], 16);
+			dma_buffer_pointer += 8;
+
+		}
+
+		// Now move to next LED switching to reset state when all leds have been updated
+		led_col++; // Next column
+		if (led_col >= LED_COLS) { // reached top
+			led_col = 0; // back to first
+			led_row++; // and move on to next row
+			if (led_row >= LED_ROWS) { // reached end
+
+				res_cnt = 0;
+				led_state = LED_RES;
+			}
+		}
+
+	}
+
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+
+}
+
 // Handle built-in blue led hanging off of C13
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
@@ -201,36 +467,36 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	}
 
 }
-//
-//// Done sending first half of the DMA buffer - this can now safely be updated
-//void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
-//
-//	if (htim->Instance == TIM3) {
-//		dma_buffer_pointer = &dma_buffer[0];
-//		update_next_buffer();
-//	}
-//
-//}
-//
-//// Done sending the second half of the DMA buffer - this can now be safely updated
-//void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-//
-//	if (htim->Instance == TIM3) {
-//		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
-//		update_next_buffer();
-//	}
-//
-//}
-//
-//// Just throw values into led_value array - the dma interrupt will
-//// handle updating the dma buffer when needed
-//void setLedValue(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
-//
-//	led_value[col][row][R] = r;
-//	led_value[col][row][G] = g;
-//	led_value[col][row][B] = b;
-//
-//}
+
+// Done sending first half of the DMA buffer - this can now safely be updated
+void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
+
+	if (htim->Instance == TIM3) {
+		dma_buffer_pointer = &dma_buffer[0];
+		update_next_buffer();
+	}
+
+}
+
+// Done sending the second half of the DMA buffer - this can now be safely updated
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
+
+	if (htim->Instance == TIM3) {
+		dma_buffer_pointer = &dma_buffer[BUFFER_SIZE];
+		update_next_buffer();
+	}
+
+}
+
+// Just throw values into led_value array - the dma interrupt will
+// handle updating the dma buffer when needed
+void setLedValue(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
+
+	led_value[col][row][R] = r;
+	led_value[col][row][G] = g;
+	led_value[col][row][B] = b;
+
+}
 
 void setLedAngle(uint8_t col, uint8_t row, float r, float g, float b) {
 
@@ -293,12 +559,10 @@ int main(void)
 
 	HAL_TIM_Base_Start_IT(&htim4);
 
-	//ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
-
 	// Start DMA to feed the PWM with values
 	// At this point the buffer should be empty - all zeros
-	//HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
-	//BUFFER_SIZE * 2);
+	HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_1, (uint32_t*) dma_buffer,
+	BUFFER_SIZE * 2);
 
   /* USER CODE END 2 */
 
@@ -307,14 +571,16 @@ int main(void)
 
 	// Outer ring
 
+	uint8_t amp = 12;
+
 
 	for (int i = 0; i < 8; i++) {
 
-		setLedAmplitude(i, 0, 50, 50, 50);
+		setLedAmplitude(i, 0, amp, amp, amp);
 		setLedAngle(i, 0, i * M_PI2 / 28, 0, i * M_PI2 / 28);
 		setLedFreq(i, 0, -1, 0, -1);
 
-		setLedAmplitude(7 - i, 7, 50, 50, 50);
+		setLedAmplitude(7 - i, 7, amp, amp, amp);
 		setLedAngle(7 - i, 7, (14 + i) * M_PI2 / 28, 0, (14 + i) * M_PI2 / 28);
 		setLedFreq(7 - i, 7, -1, 0, -1);
 
@@ -322,11 +588,11 @@ int main(void)
 
 	for (int i = 1; i < 7; i++) {
 
-		setLedAmplitude(7, i, 50, 50, 50);
+		setLedAmplitude(7, i, amp, amp, amp);
 		setLedAngle(7, i, (8 + i) * M_PI2 / 28, 0, (8 + i) * M_PI2 / 28);
 		setLedFreq(7, i, -1, 0, -1);
 
-		setLedAmplitude(0, 7 - i, 50, 50, 50);
+		setLedAmplitude(0, 7 - i, amp, amp, amp);
 		setLedAngle(0, 7 - i, (22 + i) * M_PI2 / 28, 0, (22 + i) * M_PI2 / 28);
 		setLedFreq(0, 7 - i, -1, 0, -1);
 
@@ -336,11 +602,11 @@ int main(void)
 
 	for (int i = 1; i < 7; i++) {
 
-		setLedAmplitude(i, 1, 50, 50, 50);
+		setLedAmplitude(i, 1, amp, amp, amp);
 		setLedAngle(i, 1, 0, 0, (i - 1) * M_PI2 / 20);
 		setLedFreq(i, 1, 0, 0, 1);
 
-		setLedAmplitude(7 - i, 6, 50, 50, 50);
+		setLedAmplitude(7 - i, 6, amp, amp, amp);
 		setLedAngle(7 - i, 6, 0, 0, (10 + i) * M_PI2 / 20);
 		setLedFreq(7 - i, 6, 0, 0, 1);
 
@@ -348,11 +614,11 @@ int main(void)
 
 	for (int i = 2; i < 6; i++) {
 
-		setLedAmplitude(6, i, 50, 50, 50);
+		setLedAmplitude(6, i, amp, amp, amp);
 		setLedAngle(6, i, 0, 0, (5 + i) * M_PI2 / 20);
 		setLedFreq(6, i, 0, 0, 1);
 
-		setLedAmplitude(1, 7 - i, 50, 50, 50);
+		setLedAmplitude(1, 7 - i, amp, amp, amp);
 		setLedAngle(1, 7 - i, 0, 0, (14 + i) * M_PI2 / 20);
 		setLedFreq(1, 7 - i, 0, 0, 1);
 
@@ -362,25 +628,25 @@ int main(void)
 
 	for (int i = 2; i < 6; i++) {
 
-		setLedAmplitude(i, 2, 50, 50, 50);
-		setLedAngle(i, 2, 0, 0, (i - 2) * M_PI2 / 12);
-		setLedFreq(i, 2, 0, 0, 1);
+		setLedAmplitude(i, 2, amp, amp, amp);
+		setLedAngle(i, 2, 0, (i - 2) * M_PI2 / 12, 0);
+		setLedFreq(i, 2, 0, 1, 0);
 
-		setLedAmplitude(7 - i, 5, 50, 50, 50);
-		setLedAngle(7 - i, 5, 0, 0, (4 + i) * M_PI2 / 12);
-		setLedFreq(7 - i, 5, 0, 0, 1);
+		setLedAmplitude(7 - i, 5, amp, amp, amp);
+		setLedAngle(7 - i, 5, 0, (4 + i) * M_PI2 / 12, 0);
+		setLedFreq(7 - i, 5, 0, 1, 0);
 
 	}
 
 	for (int i = 3; i < 5; i++) {
 
-		setLedAmplitude(5, i, 50, 50, 50);
-		setLedAngle(5, i, 0, 0, (1 + i) * M_PI2 / 12);
-		setLedFreq(5, i, 0, 0, 1);
+		setLedAmplitude(5, i, amp, amp, amp);
+		setLedAngle(5, i, 0, (1 + i) * M_PI2 / 12, 0);
+		setLedFreq(5, i, 0, 1, 0);
 
-		setLedAmplitude(2, 7 - i, 50, 50, 50);
-		setLedAngle(2, 7 - i, 0, 0, (7 + i) * M_PI2 / 12);
-		setLedFreq(2, 7 - i, 0, 0, 1);
+		setLedAmplitude(2, 7 - i, amp, amp, amp);
+		setLedAngle(2, 7 - i, 0, (7 + i) * M_PI2 / 12, 0);
+		setLedFreq(2, 7 - i, 0, 1, 0);
 
 	}
 
@@ -388,11 +654,11 @@ int main(void)
 
 	for (int i = 3; i < 5; i++) {
 
-		setLedAmplitude(i, 3, 50, 50, 50);
+		setLedAmplitude(i, 3, amp, amp, amp);
 		setLedAngle(i, 3, 0, 0, (i - 3) * M_PI2 / 4);
 		setLedFreq(i, 3, 0, 0, 1);
 
-		setLedAmplitude(7 - i, 4, 50, 50, 50);
+		setLedAmplitude(7 - i, 4, amp, amp, amp);
 		setLedAngle(7 - i, 4, 0, 0, (-1 + i) * M_PI2 / 4);
 		setLedFreq(7 - i, 4, 0, 0, 1);
 
