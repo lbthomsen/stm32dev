@@ -78,7 +78,7 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 /* USER CODE BEGIN PV */
 
 // Bunch of zeros used to latch the ws2812
-const uint16_t zeros[24] = {0}; // Used to trigger latching
+//const uint16_t zeros[24] = {0}; // Used to trigger latching
 
 // Look up table for led color bit patterns.  "Waste" 4k of flash but is a
 // lot faster (not measured accurately but I'd say about double).
@@ -394,7 +394,8 @@ static inline void update_next_buffer() {
 
 		// This one is simple - we got a bunch of zeros of the right size - just throw
 		// that into the buffer
-		memcpy(dma_buffer_pointer, zeros, 48);
+		//memcpy(dma_buffer_pointer, zeros, 48);
+		memset(dma_buffer_pointer, 0, 48);
 
 		res_cnt++;
 

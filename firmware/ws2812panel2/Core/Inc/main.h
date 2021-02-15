@@ -60,9 +60,7 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define T4_PRE 999
-#define T4_CNT 999
-#define T3_PRE 104
+#define T3_PRE 0
 #define T3_CNT 104
 #define BUILTIN_LED_Pin GPIO_PIN_13
 #define BUILTIN_LED_GPIO_Port GPIOC

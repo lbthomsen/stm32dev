@@ -1,0 +1,6 @@
+ws2812b.c:61:20:update_next_buffer	16	static
+ws2812b.c:126:6:HAL_TIM_PWM_PulseFinishedHalfCpltCallback	16	static
+ws2812b.c:136:6:HAL_TIM_PWM_PulseFinishedCallback	16	static
+ws2812b.c:145:6:setLedValue	16	static
+ws2812b.c:152:6:setLedValues	16	static
+ws2812b.c:160:6:ws2812b_init	24	static
