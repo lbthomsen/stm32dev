@@ -100,11 +100,11 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
-
   setLedValues(0, 0, 50, 0, 0);
   setLedValues(0, 1, 0, 50, 0);
   setLedValues(0, 2, 0, 0, 50);
+
+  ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
   /* USER CODE END 2 */
 
