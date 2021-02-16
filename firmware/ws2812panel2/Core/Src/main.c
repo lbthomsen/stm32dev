@@ -6,13 +6,13 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2021 lbthomsen@gmail.com.
   * All rights reserved.</center></h2>
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
+  * This software component is licensed by lbthomsen under MIT license,
   * the "License"; You may not use this file except in compliance with the
   * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  *                        opensource.org/licenses/MIT
   *
   ******************************************************************************
   */
@@ -100,11 +100,16 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  setLedValues(0, 0, 50, 0, 0);
-  setLedValues(0, 1, 0, 50, 0);
-  setLedValues(0, 2, 0, 0, 50);
-
   ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
+
+  setLedValues(0, 0, 50, 0, 0);
+  setLedValues(1, 0, 0, 50, 0);
+  setLedValues(2, 0, 0, 0, 50);
+  setLedValues(3, 0, 50, 0, 50);
+  setLedValues(4, 0, 50, 50, 0);
+  setLedValues(5, 0, 0, 50, 50);
+  setLedValues(6, 0, 10, 10, 10);
+  setLedValues(7, 0, 50, 50, 50);
 
   /* USER CODE END 2 */
 
