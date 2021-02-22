@@ -109,15 +109,14 @@ int main(void)
   setLedValues(4, 0, 50, 50, 0);
   setLedValues(5, 0, 0, 50, 50);
   setLedValues(6, 0, 10, 10, 10);
-  setLedValues(7, 0, 50, 50, 50);
+  setLedValues(7, 0, 20, 20, 20);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint32_t then = 0;
-  uint32_t now;
+  uint32_t then = 0, now = 0;
 
   while (1)
   {
