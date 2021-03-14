@@ -102,14 +102,14 @@ int main(void)
 
   ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
-  setLedValues(0, 0, 50, 0, 0);
+  //setLedValues(0, 0, 50, 0, 0);
   setLedValues(1, 0, 0, 50, 0);
   setLedValues(2, 0, 0, 0, 50);
-  setLedValues(3, 0, 50, 0, 50);
-  setLedValues(4, 0, 50, 50, 0);
-  setLedValues(5, 0, 0, 50, 50);
-  setLedValues(6, 0, 10, 10, 10);
-  setLedValues(7, 0, 20, 20, 20);
+  //setLedValues(3, 0, 50, 0, 50);
+  //setLedValues(4, 0, 50, 50, 0);
+  //setLedValues(5, 0, 0, 50, 50);
+  //setLedValues(6, 0, 10, 10, 10);
+  //setLedValues(7, 0, 20, 20, 20);
 
   /* USER CODE END 2 */
 

@@ -912,14 +912,14 @@ F 4 "C25905" H 2150 5850 50  0001 C CNN "LCSC"
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Connector:USB_C_Receptacle_USB2.0 J1
+L stm32dev:USB_C_Receptacle_USB2.0 J1
 U 1 1 5F19076D
 P 1100 6250
 F 0 "J1" H 1207 7117 50  0000 C CNN
 F 1 "~" H 1207 7026 50  0001 C CNN
-F 2 "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12" H 1250 6250 50  0001 C CNN
-F 3 "https://datasheet.lcsc.com/szlcsc/1811101520_Jing-Extension-of-the-Electronic-Co-C167321_C167321.pdf" H 1250 6250 50  0001 C CNN
-F 4 "C167321" H 1100 6250 50  0001 C CNN "LCSC"
+F 2 "stm32dev:USB_C_Receptacle_HRO_TYPE-C-31-M-12" H 1250 6250 50  0001 C CNN
+F 3 "1811131825_Korean-Hroparts-Elec-TYPE-C-31-M-12_C165948.pdf" H 1250 6250 50  0001 C CNN
+F 4 "C165948" H 1100 6250 50  0001 C CNN "LCSC"
 	1    1100 6250
 	1    0    0    -1  
 $EndComp
@@ -1237,16 +1237,16 @@ F 3 "" H 3200 2300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_Push SW?
+L stm32dev:TS-1088R-02526 SW?
 U 1 1 5F1C1C5D
 P 2250 2450
 AR Path="/5F162A6E/5F1C1C5D" Ref="SW?"  Part="1" 
 AR Path="/5F1C1C5D" Ref="SW2"  Part="1" 
 F 0 "SW2" H 2150 2550 50  0000 C CNN
 F 1 "~" H 2450 2550 50  0000 C CNN
-F 2 "Button_Switch_SMD:SW_SPST_TL3342" H 2250 2650 50  0001 C CNN
-F 3 "https://datasheet.lcsc.com/szlcsc/1901111503_XKB-Enterprise-TS-1187A-B-A-B_C318884.pdf" H 2250 2650 50  0001 C CNN
-F 4 "C318887" H 2250 2450 50  0001 C CNN "LCSC"
+F 2 "stm32dev:TS-1088R-02526" H 2250 2650 50  0001 C CNN
+F 3 "https://datasheet.lcsc.com/szlcsc/1912111437_XUNPU-TS-1088R-02526_C455281.pdf" H 2250 2650 50  0001 C CNN
+F 4 "C455281" H 2250 2450 50  0001 C CNN "LCSC"
 	1    2250 2450
 	0    -1   -1   0   
 $EndComp
