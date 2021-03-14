@@ -60,8 +60,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define BUILTIN_LED_Pin GPIO_PIN_13
 #define BUILTIN_LED_GPIO_Port GPIOC
-#define SDIO_DET_Pin GPIO_PIN_7
-#define SDIO_DET_GPIO_Port GPIOC
+#define SD_DET_Pin GPIO_PIN_15
+#define SD_DET_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

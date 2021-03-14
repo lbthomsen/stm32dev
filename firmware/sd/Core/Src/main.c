@@ -101,7 +101,7 @@ int main(void)
 	if (f_mount(&SDFatFS, (TCHAR const*) SDPath, 0) != FR_OK) {
 		Error_Handler();
 	} else {
-		if (f_mkfs((TCHAR const*) SDPath, FM_ANY, 0, rtext, sizeof(rtext))
+		if (f_mkfs((TCHAR const*) SDPath, FM_EXFAT, 0, rtext, sizeof(rtext))
 				!= FR_OK) {
 			Error_Handler();
 		} else {
@@ -180,7 +180,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLM = 12;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
@@ -275,11 +275,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BUILTIN_LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SDIO_DET_Pin */
-  GPIO_InitStruct.Pin = SDIO_DET_Pin;
+  /*Configure GPIO pin : SD_DET_Pin */
+  GPIO_InitStruct.Pin = SD_DET_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(SDIO_DET_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(SD_DET_GPIO_Port, &GPIO_InitStruct);
 
 }
 
