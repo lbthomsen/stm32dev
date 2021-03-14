@@ -1,0 +1,14 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP TS-1088R-02526
+D Tactile Switch
+F https://datasheet.lcsc.com/szlcsc/1912111437_XUNPU-TS-1088R-02526_C455281.pdf
+$ENDCMP
+#
+$CMP WS2812B-Mini
+D RGB LED with integrated controller
+K RGB LED NeoPixel addressable
+F https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf
+$ENDCMP
+#
+#End Doc Library
