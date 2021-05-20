@@ -64,7 +64,6 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim7;
 DMA_HandleTypeDef hdma_tim3_ch1_trig;
-DMA_HandleTypeDef hdma_tim3_ch3;
 
 /* USER CODE BEGIN PV */
 
@@ -105,16 +104,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 				for (uint8_t led = 0; led < 3; ++led) {
 
-					float value = led_amplitude[row][col][led] + (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]);
-					//value += led_offset[row][col][led];
-					//if (value < 0) value = 0;
-					//if (value > 255) value = 255;
+					uint8_t value = (uint8_t)(led_amplitude[row][col][led] - (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]));
 
-					setLedValue(col, row, led, (uint8_t)value);
+					setLedValue(col, row, led, value);
 
 					led_angle[row][col][led] += led_velocity[row][col][led];
 					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2; // Positive wrap around
-					if (led_angle[row][col][led] < M_PI2) led_angle[row][col][led] += M_PI2; // Negative wrap around
+					//if (led_angle[row][col][led] < M_PI2) led_angle[row][col][led] += M_PI2; // Negative wrap around
 
 				}
 
@@ -200,18 +196,33 @@ int main(void)
   ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
 
   // Start timer to cycle colors
-  HAL_TIM_Base_Start_IT(&htim4);
+  //HAL_TIM_Base_Start_IT(&htim4);
 
-  setLedAmplitude(0, 0, 120, 0, 0); // Full on it is very bright
-  setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
-  setLedFreq(0, 0, 0.2, 0.201, 0.202); // Slow and out of sync
+  //setLedAmplitude(0, 0, 120, 0, 0); // Full on it is very bright
+  //setLedAngle(0, 0, 0, M_PI2 / 3, 2 * M_PI2 / 3); // Each led rotated by 120 degrees
+  //setLedFreq(0, 0, 0.2, 0.201, 0.202); // Slow and out of sync
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  uint32_t then = 0, now = 0;
+  uint8_t lc = 0;
+
   while (1)
   {
+
+	  now = HAL_GetTick();
+	  if (now % 1 == 0 && now != then) {
+
+		  setLedValues(0, 0, 0, 0, lc);
+		  //setLedValue(0, 0, BL, lc);
+
+		  lc++;
+		  then = now;
+	  }
+
 
 	// Nothing to be done here - everything runs off of timers.
 	// Timer 4 controls the color changes.
@@ -313,12 +324,8 @@ static void MX_TIM3_Init(void)
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -423,11 +430,8 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
-  /* DMA1_Stream7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
 
 }
 
@@ -443,7 +447,6 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
