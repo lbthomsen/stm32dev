@@ -11,10 +11,16 @@ K usb universal serial bus type-C USB2.0
 F 1811131825_Korean-Hroparts-Elec-TYPE-C-31-M-12_C165948.pdf
 $ENDCMP
 #
-$CMP WS2812B-Mini
+$CMP WS2812B-Mini_copy
 D RGB LED with integrated controller
 K RGB LED NeoPixel addressable
 F https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf
+$ENDCMP
+#
+$CMP WS2812C-2020
+D RGB LED with integrated controller
+K RGB LED NeoPixel addressable
+F https://ipfs-pin.com/ipfs/QmUrWWQTAtUDvCNqULeBaKaw2HwTcne6zNz3L68ZhahRnx/WS2812C-2020_361_V1.0_EN_20031610354448.pdf
 $ENDCMP
 #
 #End Doc Library
