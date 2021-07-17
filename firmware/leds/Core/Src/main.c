@@ -214,9 +214,9 @@ int main(void)
   {
 
 	  now = HAL_GetTick();
-	  if (now % 1 == 0 && now != then) {
+	  if (now % 100 == 0 && now != then) {
 
-		  setLedValues(0, 0, 0, 0, lc);
+		  setLedValues(0, 0, 0, lc, lc);
 		  //setLedValue(0, 0, BL, lc);
 
 		  lc++;
