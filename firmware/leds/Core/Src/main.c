@@ -49,8 +49,7 @@
 #define M_PI2 2*M_PI
 #define SAMPLE_FREQ 100
 
-#define LED_ROWS 1
-#define LED_COLS 1
+#define LED_COUNT 1
 
 /* USER CODE END PD */
 
@@ -68,9 +67,9 @@ DMA_HandleTypeDef hdma_tim3_ch1_trig;
 /* USER CODE BEGIN PV */
 
 // Base for calculating RGB values
-float led_angle[LED_ROWS][LED_COLS][3] = { 0 };
-float led_velocity[LED_ROWS][LED_COLS][3] = { 0 };
-uint8_t led_amplitude[LED_ROWS][LED_COLS][3] = { 0 };
+float led_angle[LED_CNT][3] = { 0 };
+float led_velocity[LED_CNT][3] = { 0 };
+uint8_t led_amplitude[LED_CNT][3] = { 0 };
 //uint8_t led_offset[LED_ROWS][LED_COLS][3] = { 0 };
 
 
@@ -98,23 +97,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_GPIO_WritePin(CALC_GPIO_Port, CALC_Pin, GPIO_PIN_SET);
 
 		// Update all led values - this is quite heavy for 8*8*3 it takes around 30-40 ms
-		for (uint16_t col = 0; col < LED_COLS; col++) {
+		for (uint16_t l = 0; l < LED_COUNT; l++) {
 
-			for (uint16_t row = 0; row < LED_ROWS; row++) {
+				for (uint8_t col = 0; col < 3; ++col) {
 
-				for (uint8_t led = 0; led < 3; ++led) {
+					uint8_t value = (uint8_t)(led_amplitude[l][col] - (arm_cos_f32(led_angle[l][col]) * led_amplitude[l][col]));
 
-					uint8_t value = (uint8_t)(led_amplitude[row][col][led] - (arm_cos_f32(led_angle[row][col][led]) * led_amplitude[row][col][led]));
+					setLedValue(l, col, value);
 
-					setLedValue(col, row, led, value);
-
-					led_angle[row][col][led] += led_velocity[row][col][led];
-					if (led_angle[row][col][led] > M_PI2) led_angle[row][col][led] -= M_PI2; // Positive wrap around
+					led_angle[l][col] += led_velocity[l][col];
+					if (led_angle[l][col] > M_PI2) led_angle[l][col] -= M_PI2; // Positive wrap around
 					//if (led_angle[row][col][led] < M_PI2) led_angle[row][col][led] += M_PI2; // Negative wrap around
 
 				}
-
-			}
 
 		}
 
@@ -128,27 +123,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 }
 
-void setLedAngle(uint8_t col, uint8_t row, float r, float g, float b) {
+void setLedAngle(uint8_t led, float r, float g, float b) {
 
-	led_angle[col][row][RL] = r;
-	led_angle[col][row][GL] = g;
-	led_angle[col][row][BL] = b;
-
-}
-
-void setLedFreq(uint8_t col, uint8_t row, float r, float g, float b) {
-
-	led_velocity[col][row][RL] = M_PI2 / (SAMPLE_FREQ / r);
-	led_velocity[col][row][GL] = M_PI2 / (SAMPLE_FREQ / g);
-	led_velocity[col][row][BL] = M_PI2 / (SAMPLE_FREQ / b);
+	led_angle[led][RL] = r;
+	led_angle[led][GL] = g;
+	led_angle[led][BL] = b;
 
 }
 
-void setLedAmplitude(uint8_t col, uint8_t row, uint8_t r, uint8_t g, uint8_t b) {
+void setLedFreq(uint8_t led, float r, float g, float b) {
 
-	led_amplitude[col][row][RL] = r;
-	led_amplitude[col][row][GL] = g;
-	led_amplitude[col][row][BL] = b;
+	led_velocity[led][RL] = M_PI2 / (SAMPLE_FREQ / r);
+	led_velocity[led][GL] = M_PI2 / (SAMPLE_FREQ / g);
+	led_velocity[led][BL] = M_PI2 / (SAMPLE_FREQ / b);
+
+}
+
+void setLedAmplitude(uint8_t led, uint8_t r, uint8_t g, uint8_t b) {
+
+	led_amplitude[led][RL] = r;
+	led_amplitude[led][GL] = g;
+	led_amplitude[led][BL] = b;
 
 }
 
@@ -193,7 +188,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim7);
 
   // Get the ws2812 bitstream going - this will run continously at 800 kHz
-  ws2812b_init(&htim3, TIM_CHANNEL_1, LED_ROWS, LED_COLS);
+  ws2812b_init(&htim3, TIM_CHANNEL_1, LED_COUNT);
 
   // Start timer to cycle colors
   //HAL_TIM_Base_Start_IT(&htim4);
@@ -214,9 +209,9 @@ int main(void)
   {
 
 	  now = HAL_GetTick();
-	  if (now % 100 == 0 && now != then) {
+	  if (now - then >= 50) {
 
-		  setLedValues(0, 0, 0, lc, lc);
+		  setLedValues(0, 0, lc, lc);
 		  //setLedValue(0, 0, BL, lc);
 
 		  lc++;
