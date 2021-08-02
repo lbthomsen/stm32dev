@@ -1,6 +1,3 @@
-[submodule "firmware/st7789/stm32-st7789"]
-	path = firmware/st7789/stm32-st7789
-	url = git@github.com:lbthomsen/stm32-st7789.git
 [submodule "firmware/nrf24l01master/stm32-st7789"]
 	path = firmware/nrf24l01master/stm32-st7789
 	url = git@github.com:lbthomsen/stm32-st7789.git
@@ -16,3 +13,6 @@
 [submodule "firmware/ws2812panel2/stm32-ws2812b"]
 	path = firmware/ws2812panel2/stm32-ws2812b
 	url = git@github.com:lbthomsen/stm32-ws2812b.git
+[submodule "firmware/stm32-st7789"]
+	path = firmware/stm32-st7789
+	url = git@github.com:lbthomsen/stm32-st7789.git
