@@ -112,7 +112,7 @@ int main(void)
 
   uint32_t last_print = 0, now = 0, cnt = 0;
 
-  while (1)
+  for (;;)
   {
 
 	now = HAL_GetTick();
