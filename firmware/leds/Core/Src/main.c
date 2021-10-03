@@ -26,7 +26,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -181,7 +180,6 @@ int main(void)
   MX_TIM7_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
-  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   // Start the timer to get the blue led flashing every second
@@ -211,7 +209,7 @@ int main(void)
 	  now = HAL_GetTick();
 	  if (now - then >= 50) {
 
-		  setLedValues(0, 0, lc, lc);
+		  setLedValues(0, lc, 0, 0);
 		  //setLedValue(0, 0, BL, lc);
 
 		  lc++;
