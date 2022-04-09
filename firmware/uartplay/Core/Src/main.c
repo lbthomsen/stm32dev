@@ -49,7 +49,7 @@ DMA_HandleTypeDef hdma_uart4_rx;
 
 /* USER CODE BEGIN PV */
 
-uint8_t buf0[64], buf1[64]; // Buffer for two UART's
+uint8_t buf0[32], buf1[32]; // Buffer for two UART's
 
 /* USER CODE END PV */
 
@@ -89,6 +89,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
 	DBG("HAL_RxHalfCplt");
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+	DBG("HAL RxEvent - size %u", Size);
 }
 
 /* USER CODE END 0 */
@@ -162,7 +166,7 @@ int main(void)
 
 	  if (now - last_tx >= 10000) {
 
-		  sprintf(buf, "1 test\n");
+		  sprintf(buf, "Test string send at time %lu\n", now);
 
 		  HAL_StatusTypeDef status;
 

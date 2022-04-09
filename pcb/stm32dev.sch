@@ -509,7 +509,7 @@ Wire Wire Line
 Text GLabel 7850 3250 2    50   Input ~ 0
 PB4
 Text GLabel 7850 3150 2    50   Input ~ 0
-PB3
+SWO
 Text GLabel 7850 2550 2    50   Input ~ 0
 SWCLK
 Text GLabel 7850 2650 2    50   Input ~ 0
@@ -1840,7 +1840,7 @@ Wire Wire Line
 Text GLabel 7700 5700 0    50   Input ~ 0
 PB3
 Text GLabel 6100 5400 2    50   Input ~ 0
-PB3
+SWO
 Text GLabel 8900 5400 2    50   Input ~ 0
 PB5
 Text GLabel 8900 5500 2    50   Input ~ 0
