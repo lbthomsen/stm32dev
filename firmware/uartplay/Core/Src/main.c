@@ -166,7 +166,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint32_t now = 0, last_blink = 0, last_tx = 0;
+  uint32_t now = 0, last_blink = 0, last_tx = 0, scnt = 0;
   char buf[128];
 
   while (1)
@@ -181,14 +181,13 @@ int main(void)
 		  last_blink = now;
 	  }
 
-	  if (now - last_tx >= 50) {
+	  if (now - last_tx >= 10) {
 
-		  //DBG("Sending");
-
-		  sprintf(buf, "A somewhat long string transmitted at: %lu\n", now);
+		  sprintf(buf, "String %lu transmitted at: %lu\n", scnt, now);
 
 		  HAL_UART_Transmit(&huart2, (uint8_t *)&buf, strlen(buf), HAL_MAX_DELAY);
 
+		  ++scnt;
 		  last_tx = now;
 	  }
 
