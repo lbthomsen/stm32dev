@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "string.h"
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,6 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define DMA_BUFFER_SIZE 64
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,13 +45,12 @@
  UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart3;
-UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_uart4_rx;
 
 /* USER CODE BEGIN PV */
 
-uint8_t buf0[32], buf1[32]; // Buffer for two UART's
+uint8_t dmabuf[DMA_BUFFER_SIZE * 2];
+char rxbuf[256];
 
 /* USER CODE END PV */
 
@@ -60,8 +61,6 @@ static void MX_DMA_Init(void);
 static void MX_UART4_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_USART3_UART_Init(void);
-static void MX_USART6_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -83,16 +82,43 @@ int _write(int fd, char* ptr, int len) {
   return -1;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	DBG("HAL_RxCplt");
+void rx_string_handler() {
+	DBG("Received string: %s", rxbuf);
+
+	rxbuf[0] = '\0';
 }
 
-void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
-	DBG("HAL_RxHalfCplt");
+void process_character(const char ch) {
+	switch(ch) {
+	case '\r':
+		break;
+	case '\n':
+		rx_string_handler();
+		break;
+	default:
+		strncat((char *)&rxbuf, &ch, 1);
+	}
 }
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
-	DBG("HAL RxEvent - size %u", Size);
+
+	static uint16_t last_size = 0;
+	char *ch;
+
+	// Ignore if called twice (which will happen on every half buffer)
+	if (Size != last_size) {
+
+		// If wrap around reset last_size
+		if (Size < last_size) last_size = 0;
+
+		while (last_size < Size) {
+			ch = (char *)(dmabuf + last_size);
+			process_character(ch[0]);
+			++last_size;
+		}
+
+	}
+
 }
 
 /* USER CODE END 0 */
@@ -129,21 +155,18 @@ int main(void)
   MX_UART4_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_USART3_UART_Init();
-  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
   DBG("\n\n----------------\nStarting...");
 
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart4, &buf0, sizeof(buf0));
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart4, &buf1, sizeof(buf1));
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart4, (uint8_t *)&dmabuf, DMA_BUFFER_SIZE * 2);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint32_t now = 0, last_blink = 0, last_print = 0, last_tx = 0;
+  uint32_t now = 0, last_blink = 0, last_tx = 0;
   char buf[128];
 
   while (1)
@@ -158,19 +181,13 @@ int main(void)
 		  last_blink = now;
 	  }
 
-	  if (now - last_print >= 1000) {
-		  DBG("Tick %lu", now / 1000);
+	  if (now - last_tx >= 50) {
 
-		  last_print = now;
-	  }
+		  //DBG("Sending");
 
-	  if (now - last_tx >= 10000) {
+		  sprintf(buf, "A somewhat long string transmitted at: %lu\n", now);
 
-		  sprintf(buf, "Test string send at time %lu\n", now);
-
-		  HAL_StatusTypeDef status;
-
-		  status = HAL_UART_Transmit(&huart2, (uint8_t *)&buf, strlen(buf), HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)&buf, strlen(buf), HAL_MAX_DELAY);
 
 		  last_tx = now;
 	  }
@@ -327,72 +344,6 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
-  * @brief USART3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART3_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART3_Init 0 */
-
-  /* USER CODE END USART3_Init 0 */
-
-  /* USER CODE BEGIN USART3_Init 1 */
-
-  /* USER CODE END USART3_Init 1 */
-  huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
-  huart3.Init.WordLength = UART_WORDLENGTH_8B;
-  huart3.Init.StopBits = UART_STOPBITS_1;
-  huart3.Init.Parity = UART_PARITY_NONE;
-  huart3.Init.Mode = UART_MODE_TX_RX;
-  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART3_Init 2 */
-
-  /* USER CODE END USART3_Init 2 */
-
-}
-
-/**
-  * @brief USART6 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART6_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART6_Init 0 */
-
-  /* USER CODE END USART6_Init 0 */
-
-  /* USER CODE BEGIN USART6_Init 1 */
-
-  /* USER CODE END USART6_Init 1 */
-  huart6.Instance = USART6;
-  huart6.Init.BaudRate = 115200;
-  huart6.Init.WordLength = UART_WORDLENGTH_8B;
-  huart6.Init.StopBits = UART_STOPBITS_1;
-  huart6.Init.Parity = UART_PARITY_NONE;
-  huart6.Init.Mode = UART_MODE_TX_RX;
-  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart6) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART6_Init 2 */
-
-  /* USER CODE END USART6_Init 2 */
-
-}
-
-/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -421,7 +372,6 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
