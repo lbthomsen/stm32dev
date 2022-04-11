@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2022 Lars Boegild Thomsen <lbthomsen@gmail.com>.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -23,7 +23,6 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "string.h"
-#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,7 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DMA_BUFFER_SIZE 64
+#define DMA_BUFFER_SIZE 128 // size of buffer used by dma for uart receive
+#define STRING_BUFFER_SIZE 256
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,8 +49,8 @@ DMA_HandleTypeDef hdma_uart4_rx;
 
 /* USER CODE BEGIN PV */
 
-uint8_t dmabuf[DMA_BUFFER_SIZE * 2];
-char rxbuf[256];
+uint8_t dmabuf[DMA_BUFFER_SIZE]; // dma buffer
+char rxbuf[STRING_BUFFER_SIZE];  // rx string buffer
 
 /* USER CODE END PV */
 
@@ -69,56 +69,73 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 // Send printf to uart1
-int _write(int fd, char* ptr, int len) {
-  HAL_StatusTypeDef hstatus;
+int _write(int fd, char *ptr, int len) {
+	HAL_StatusTypeDef hstatus;
 
-  if (fd == 1 || fd == 2) {
-    hstatus = HAL_UART_Transmit(&huart1, (uint8_t *) ptr, len, HAL_MAX_DELAY);
-    if (hstatus == HAL_OK)
-      return len;
-    else
-      return -1;
-  }
-  return -1;
+	if (fd == 1 || fd == 2) {
+		hstatus = HAL_UART_Transmit(&huart1, (uint8_t*) ptr, len,
+				HAL_MAX_DELAY);
+		if (hstatus == HAL_OK)
+			return len;
+		else
+			return -1;
+	}
+	return -1;
 }
 
 void rx_string_handler() {
 	DBG("Received string: %s", rxbuf);
-
-	rxbuf[0] = '\0';
 }
 
-void process_character(const char ch) {
-	switch(ch) {
-	case '\r':
+static inline void process_character(const char ch) { // We inline this one to avoid call overhead
+
+	static uint32_t strlen = 0;
+
+	switch (ch) {
+	case '\r': // Ignore carriage returns
 		break;
-	case '\n':
+	case '\n': // Trigger on linefeed
 		rx_string_handler();
+		rxbuf[0] = '\0';
+		strlen = 0;
 		break;
-	default:
-		strncat((char *)&rxbuf, &ch, 1);
+	default:   // By default, just append the string
+		if (strlen < STRING_BUFFER_SIZE) {
+			strncat((char*) &rxbuf, &ch, 1); // Danger, Will Robinson!  Could go horribly wrong!
+			++strlen;
+		}
 	}
 }
 
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+/**
+ * @brief  UART Event Callback.  Fired on idle or if dma buffer half full or full.
+ * @param  huart  Pointer to a UART_HandleTypeDef structure that contains
+ *                the configuration information for the specified UART module.
+ * @param  offset A offset counter pointing to last valid character in DMA buffer.
+ * @retval None
+ */
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t offset) {
 
-	static uint16_t last_size = 0;
-	char *ch;
+	static uint16_t last_offset = 0;
 
 	// Ignore if called twice (which will happen on every half buffer)
-	if (Size != last_size) {
+	if (offset != last_offset) {
 
 		// If wrap around reset last_size
-		if (Size < last_size) last_size = 0;
+		if (offset < last_offset)
+			last_offset = 0;
 
-		while (last_size < Size) {
-			ch = (char *)(dmabuf + last_size);
-			process_character(ch[0]);
-			++last_size;
+		while (last_offset < offset) {
+			process_character((char) dmabuf[last_offset]);
+			++last_offset;
 		}
 
 	}
 
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+	DBG("HAL UART Error");
 }
 
 /* USER CODE END 0 */
@@ -157,44 +174,44 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  DBG("\n\n----------------\nStarting...");
+	DBG("\n\n----------------\nStarting...");
 
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart4, (uint8_t *)&dmabuf, DMA_BUFFER_SIZE * 2);
+	HAL_UARTEx_ReceiveToIdle_DMA(&huart4, (uint8_t*) &dmabuf, DMA_BUFFER_SIZE);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint32_t now = 0, last_blink = 0, last_tx = 0, scnt = 0;
-  char buf[128];
+	uint32_t now = 0, last_blink = 0, last_tx = 0, scnt = 0;
+	char buf[128];
 
-  while (1)
-  {
+	while (1) {
 
-	  now = HAL_GetTick();
+		now = HAL_GetTick();
 
-	  if (now - last_blink >= 500) {
+		if (now - last_blink >= 500) {
 
-		  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
-		  last_blink = now;
-	  }
+			last_blink = now;
+		}
 
-	  if (now - last_tx >= 10) {
+		if (now - last_tx >= 5) {
 
-		  sprintf(buf, "String %lu transmitted at: %lu\n", scnt, now);
+			sprintf(buf, "String %lu transmitted at: %lu\n", scnt, now);
 
-		  HAL_UART_Transmit(&huart2, (uint8_t *)&buf, strlen(buf), HAL_MAX_DELAY);
+			HAL_UART_Transmit(&huart2, (uint8_t*) &buf, strlen(buf),
+					HAL_MAX_DELAY);
 
-		  ++scnt;
-		  last_tx = now;
-	  }
+			++scnt;
+			last_tx = now;
+		}
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -395,11 +412,10 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1) {
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
