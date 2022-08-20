@@ -42,7 +42,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_uart4_rx;
@@ -105,6 +105,7 @@ static inline void process_character(const char ch) { // We inline this one to a
 			++strlen;
 		}
 	}
+
 }
 
 /**
