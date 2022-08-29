@@ -64,6 +64,14 @@ void Error_Handler(void);
 #define MIDI_IN_PORTS_NUM 2
 #define MIDI_OUT_PORTS_NUM 2
 
+#ifdef DEBUG
+#define DBG(...)    printf(__VA_ARGS__);\
+                    printf("\n");
+#else
+#define DBG(...)
+#endif
+
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

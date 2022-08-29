@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
+#include "stm32f405xx.h"
 #include "stm32f4xx_hal.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
@@ -38,7 +39,7 @@
 
 /* USER CODE END PV */
 
-extern PCD_HandleTypeDef hpcd_USB_FS;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
@@ -295,16 +296,16 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev) {
     /* Init USB Ip. */
     /* Link the driver to the stack. */
-    hpcd_USB_FS.pData = pdev;
-    pdev->pData = &hpcd_USB_FS;
+    hpcd_USB_OTG_FS.pData = pdev;
+    pdev->pData = &hpcd_USB_OTG_FS;
 
-    hpcd_USB_FS.Instance = USB_OTG_FS;
-    hpcd_USB_FS.Init.dev_endpoints = 8;
-    hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
-    hpcd_USB_FS.Init.low_power_enable = DISABLE;
-    hpcd_USB_FS.Init.lpm_enable = DISABLE;
-    hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
-    if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK) {
+    hpcd_USB_OTG_FS.Instance = USB_OTG_FS;
+    hpcd_USB_OTG_FS.Init.dev_endpoints = 8;
+    hpcd_USB_OTG_FS.Init.speed = PCD_SPEED_FULL;
+    hpcd_USB_OTG_FS.Init.low_power_enable = DISABLE;
+    hpcd_USB_OTG_FS.Init.lpm_enable = DISABLE;
+    hpcd_USB_OTG_FS.Init.battery_charging_enable = DISABLE;
+    if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK) {
         Error_Handler();
     }
 
@@ -324,9 +325,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev) {
   HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_FS, PCD_ISOINIncompleteCallback);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 
-  HAL_PCDEx_SetRxFiFo(&hpcd_USB_FS, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_FS, 0, 0x40);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_FS, 1, 0x80);
+  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x80);
     /* USER CODE BEGIN EndPoint_Configuration */
 //    HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*) pdev->pData, 0x00, PCD_SNG_BUF, 0x18);
 //    HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*) pdev->pData, 0x80, PCD_SNG_BUF, 0x58);

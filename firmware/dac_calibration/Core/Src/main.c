@@ -31,6 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,7 +50,26 @@ UART_HandleTypeDef huart1;
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
-uint16_t adc_buffer[4]; // 4 channels
+
+const uint16_t adc_vref_expected = 1.2 / 3.3 * 0x1000;
+
+const uint32_t dac_values[] = {
+        0,
+        1000,
+        2000,
+        3000,
+        4000
+};
+
+const uint32_t adc_channel[] = {
+        ADC_CHANNEL_0,
+        ADC_CHANNEL_1,
+        ADC_CHANNEL_TEMPSENSOR,
+        ADC_CHANNEL_VREFINT
+};
+
+uint16_t adc_value[sizeof(adc_channel) / sizeof(adc_channel[0])];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -81,17 +101,40 @@ int _write(int fd, char *ptr, int len) {
     return -1;
 }
 
-void ADC_Select_Channel(uint32_t channel) {
+void dac_set_value(const uint32_t channel, uint32_t value) {
+    HAL_DAC_SetValue(&hdac, channel, DAC_ALIGN_12B_R, value);
+    HAL_DAC_Start(&hdac, channel);
+}
+
+uint16_t adc_get_value(const uint32_t channel) {
+
+    //uint32_t start_time = HAL_GetTick();
 
     ADC_ChannelConfTypeDef sConfig = { 0 };
-    /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-     */
     sConfig.Channel = channel;
     sConfig.Rank = 1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+    sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
+
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
         Error_Handler();
     }
+
+    //DBG("Starting convertion");
+
+    if (HAL_ADC_Start(&hadc1) != HAL_OK) {
+        DBG("ADC Error");
+        Error_Handler();
+    }
+
+    if (HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) != HAL_OK) {
+        DBG("ADC Poll Error");
+        Error_Handler();
+    }
+
+    //DBG("Conversion done - time = %lu", HAL_GetTick() - start_time);
+
+    return HAL_ADC_GetValue(&hadc1);
+
 }
 
 /* USER CODE END 0 */
@@ -135,13 +178,16 @@ int main(void)
 
 
 
+    dac_set_value(DAC_CHANNEL_1, 0);
+    dac_set_value(DAC_CHANNEL_2, 0);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-    uint32_t now = 0, last_blink = 0, last_tick = 0;
+    uint32_t now = 0, last_blink = 0, last_tick = 0, last_dac_change = 0;
+    uint32_t dac_value_idx = 1;
 
     while (1) {
 
@@ -154,18 +200,24 @@ int main(void)
 
         if (now - last_tick >= 1000) {
 
-        	DBG("Starting convertion");
-
-            if (HAL_ADC_Start(&hadc1) != HAL_OK) {
-            	DBG("ADC Error");
-            	Error_Handler();
+            for (int i = 0; i < sizeof(adc_channel) / sizeof(adc_channel[0]); ++i) {
+                adc_value[i] = adc_get_value(adc_channel[i]);
             }
 
-            HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-
-            DBG("Convertion done in %lu ms", HAL_GetTick() - now);
+            DBG("CH0 = %d CH1 = %d TEMP = %d VREF = %d", adc_value[0], adc_value[1], adc_value[2], adc_value[3]);
 
         	last_tick = now;
+        }
+
+        if (now - last_dac_change >= 5000) {
+
+            dac_set_value(DAC_CHANNEL_1, dac_values[dac_value_idx]);
+
+            ++dac_value_idx;
+
+            if (dac_value_idx >= sizeof(dac_values) / sizeof(dac_values[0])) dac_value_idx = 0;
+
+            last_dac_change = now;
         }
 
     /* USER CODE END WHILE */
@@ -243,13 +295,13 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.ScanConvMode = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 4;
+  hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -262,33 +314,6 @@ static void MX_ADC1_Init(void)
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = 2;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-  sConfig.Rank = 3;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_VREFINT;
-  sConfig.Rank = 4;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -328,7 +353,7 @@ static void MX_DAC_Init(void)
   /** DAC channel OUT1 config
   */
   sConfig.DAC_Trigger = DAC_TRIGGER_SOFTWARE;
-  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_DISABLE;
   if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
