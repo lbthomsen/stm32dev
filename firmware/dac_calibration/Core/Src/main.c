@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,6 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define VREF_VOLTAGE 1.2
 
 /* USER CODE END PD */
 
@@ -53,12 +56,14 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 const uint16_t adc_vref_expected = 1.2 / 3.3 * 0x1000;
 
-const uint32_t dac_values[] = {
+const float dac_values[] = {
         0,
-        1000,
-        2000,
-        3000,
-        4000
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        2.5,
+        3.0
 };
 
 const uint32_t adc_channel[] = {
@@ -67,6 +72,10 @@ const uint32_t adc_channel[] = {
         ADC_CHANNEL_TEMPSENSOR,
         ADC_CHANNEL_VREFINT
 };
+
+float adc_multiplier;
+float dac_multiplier = pow(2, 12) / 3.3;
+float dac_correction = 1;
 
 uint16_t adc_value[sizeof(adc_channel) / sizeof(adc_channel[0])];
 
@@ -106,6 +115,10 @@ void dac_set_value(const uint32_t channel, uint32_t value) {
     HAL_DAC_Start(&hdac, channel);
 }
 
+void dac_set_voltage(const uint32_t channel, float value) {
+    dac_set_value(channel, (uint32_t)round(dac_correction * value * dac_multiplier));
+}
+
 uint16_t adc_get_value(const uint32_t channel) {
 
     //uint32_t start_time = HAL_GetTick();
@@ -135,6 +148,10 @@ uint16_t adc_get_value(const uint32_t channel) {
 
     return HAL_ADC_GetValue(&hadc1);
 
+}
+
+float adc_get_voltage(uint16_t raw) {
+    return (float)raw * adc_multiplier;
 }
 
 /* USER CODE END 0 */
@@ -176,10 +193,38 @@ int main(void)
 
     DBG("\n\nStarting");
 
-
-
     dac_set_value(DAC_CHANNEL_1, 0);
     dac_set_value(DAC_CHANNEL_2, 0);
+
+    HAL_Delay(100);
+
+    DBG("Calibrating ADC");
+
+    uint32_t adc_total = 0;
+    for (int i = 0; i <= 9; ++i) {
+        adc_total += adc_get_value(ADC_CHANNEL_VREFINT);
+        HAL_Delay(10);
+    }
+    adc_multiplier = (float)1.2 / ((float)adc_total / 10);
+
+    DBG("ADC Multiplier = %f", adc_multiplier);
+
+    DBG("Setting DAC Channel 2 = 3.0V using default multiplier");
+    dac_set_voltage(DAC_CHANNEL_2, 3.0);
+
+    HAL_Delay(10);
+
+    float voltage = 0;
+    for (int i = 0; i <= 9; ++i) {
+        voltage = voltage + adc_get_voltage(adc_get_value(ADC_CHANNEL_1));
+        HAL_Delay(10);
+    }
+    voltage = voltage / 10;
+    DBG("Average voltage measured %0.3f", voltage);
+
+    dac_correction = 3 / voltage;
+
+    DBG("DAC Correction = %0.3f", dac_correction);
 
   /* USER CODE END 2 */
 
@@ -201,17 +246,18 @@ int main(void)
         if (now - last_tick >= 1000) {
 
             for (int i = 0; i < sizeof(adc_channel) / sizeof(adc_channel[0]); ++i) {
+                HAL_Delay(10);
                 adc_value[i] = adc_get_value(adc_channel[i]);
             }
 
-            DBG("CH0 = %d CH1 = %d TEMP = %d VREF = %d", adc_value[0], adc_value[1], adc_value[2], adc_value[3]);
+            DBG("Channel 1 = %0.3f Channel 2 = %0.3f TEMP = %0.2f VREF = %0.3f", adc_get_voltage(adc_value[0]), adc_get_voltage(adc_value[1]), adc_get_voltage(adc_value[2]), adc_get_voltage(adc_value[3]));
 
         	last_tick = now;
         }
 
         if (now - last_dac_change >= 5000) {
 
-            dac_set_value(DAC_CHANNEL_1, dac_values[dac_value_idx]);
+            dac_set_voltage(DAC_CHANNEL_1, dac_values[dac_value_idx]);
 
             ++dac_value_idx;
 
@@ -313,7 +359,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
